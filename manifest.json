@@ -1,0 +1,9 @@
+{
+	"id": "property-kanban",
+	"name": "Property Kanban",
+	"version": "1.0.0",
+	"minAppVersion": "1.4.4",
+	"description": "Kanban board driven by a configurable markdown frontmatter property.",
+	"author": "",
+	"isDesktopOnly": false
+}
