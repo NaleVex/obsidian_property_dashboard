@@ -1,35 +1,21 @@
-import { UNCATEGORIZED_STATUS } from '../settings/types';
-
-export interface KanbanCard {
+export interface BoardCard {
 	id: string;
 	filePath: string;
 	title: string;
-	status: string;
-	rawStatus: string;
+	columnId: string;
+	rawValue: string;
 }
 
-export interface KanbanColumn {
+export interface BoardColumn {
 	id: string;
 	title: string;
-	cards: KanbanCard[];
+	cards: BoardCard[];
 }
 
-export interface BoardState {
-	columns: KanbanColumn[];
+export interface NoteIndexState {
+	columns: BoardColumn[];
 	isLoading: boolean;
-	lastUpdated: number;
+	cardCount: number;
 }
 
-export type BoardListener = (state: BoardState) => void;
-
-export function createEmptyBoard(isLoading = true): BoardState {
-	return {
-		columns: [],
-		isLoading,
-		lastUpdated: Date.now(),
-	};
-}
-
-export function isUncategorizedStatus(status: string): boolean {
-	return status === UNCATEGORIZED_STATUS;
-}
+export type NoteIndexListener = (state: NoteIndexState) => void;

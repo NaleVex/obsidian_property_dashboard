@@ -1,16 +1,15 @@
 # Property Kanban
 
-An Obsidian plugin that displays a Kanban board driven by a configurable markdown frontmatter property.
+An Obsidian plugin that adds a `.board` filetype. Each board file stores its own settings and views, and opens in a dedicated board view.
 
 ## Features
 
-- **Configurable trigger property** — Group notes by any frontmatter field (e.g. `status`)
-- **Custom columns** — Define an ordered list of status values as Kanban columns
-- **Drag & drop** — Move cards between columns; updates frontmatter via `processFrontMatter`
-- **Status dropdown** — Change status directly from each card using Obsidian's native menu
-- **Real-time sync** — Board updates when notes are edited, renamed, or deleted elsewhere
-- **Folder filter** — Optionally limit the board to notes under a folder prefix
-- **Uncategorized column** — Catch notes with missing or unknown status values
+- **Board files** — Create `.board` documents that open in their own view
+- **Per-board settings** — Trigger property, scope (all / siblings / folder), and known values
+- **Multiple views** — Tabs on the board; currently kanban only
+- **Kanban columns** — One column per configured value, plus an **Unknown** column
+- **Read-only cards** — Notes that have the trigger property appear as title-only cards
+- **Live sync** — Board updates when notes change in the vault
 
 ## Installation
 
@@ -24,34 +23,51 @@ An Obsidian plugin that displays a Kanban board driven by a configurable markdow
 
 ## Usage
 
-1. Open **Settings → Property Kanban** and configure:
-   - **Trigger property** (default: `status`)
-   - **Statuses** — the column order (e.g. `todo`, `in-progress`, `done`)
-2. Add frontmatter to your notes:
+1. Create a board via the ribbon icon or command palette: **Create new board**.
+2. Open the board file (or it opens automatically after create).
+3. Use the header gear to configure:
+   - **Trigger property** — frontmatter key used for grouping (e.g. `status`)
+   - **Limit to** — entire vault, siblings of the board file, or a specific folder
+   - **Values** — ordered column list (e.g. `todo`, `in-progress`, `done`)
+4. Add frontmatter to notes you want on the board:
 
 ```yaml
 ---
 status: in-progress
-title: My Task
 ---
 ```
 
-3. Open the board via the ribbon icon (grid) or command palette: **Open Property Kanban board**.
+5. Add more kanban views with the **+** tab control if needed.
 
-## Settings
+Notes without the trigger property are excluded. Notes with the property but an empty or unrecognized value appear in the **Unknown** column.
 
-| Setting | Description |
+## Board file format
+
+Boards are JSON files with a `.board` extension, for example:
+
+```json
+{
+  "version": 1,
+  "name": "Untitled",
+  "settings": {
+    "triggerProperty": "status",
+    "limitTo": { "mode": "all" },
+    "values": ["todo", "in-progress", "done"]
+  },
+  "views": [
+    { "id": "…", "type": "kanban", "name": "Kanban" }
+  ],
+  "activeViewId": "…"
+}
+```
+
+`limitTo` modes:
+
+| Mode | Meaning |
 |---|---|
-| Trigger property | Frontmatter key used for column grouping |
-| Statuses | Ordered list of column values |
-| Folder filter | Optional path prefix (e.g. `Projects/`) |
-| Show uncategorized column | Display notes with unknown/missing status |
-| Include files without property | Show notes lacking the trigger property |
-| Case-sensitive status matching | Exact casing when matching status values |
-
-## How it works
-
-The plugin scans all markdown files in the vault (optionally filtered by folder), reads the trigger property from Obsidian's metadata cache, and groups matching notes into columns. When you drag a card or pick a new status from the dropdown, the plugin updates the note's frontmatter using `app.fileManager.processFrontMatter`. The board listens to `metadataCache` change events to stay in sync with external edits.
+| `all` | All markdown notes in the vault |
+| `siblings` | Notes in the same folder as the board file |
+| `folder` | Notes under a specific vault folder path |
 
 ## Development
 
@@ -62,8 +78,6 @@ npm run build  # production bundle
 ```
 
 ### Deploy to test vault
-
-Copy the built plugin into a local Obsidian vault for testing:
 
 ```bash
 npm run deploy

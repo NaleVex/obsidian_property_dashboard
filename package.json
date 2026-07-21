@@ -1,7 +1,7 @@
 {
 	"name": "property-kanban",
 	"version": "1.0.0",
-	"description": "Kanban board driven by markdown frontmatter properties",
+	"description": "File-based property boards with kanban views for Obsidian",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
@@ -13,9 +13,6 @@
 	"keywords": [],
 	"license": "MIT",
 	"dependencies": {
-		"@dnd-kit/core": "^6.3.1",
-		"@dnd-kit/sortable": "^10.0.0",
-		"@dnd-kit/utilities": "^3.2.2",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"
 	},

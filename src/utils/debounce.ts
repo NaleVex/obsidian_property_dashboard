@@ -1,15 +1,16 @@
 export function debounce<T extends (...args: never[]) => void>(
 	fn: T,
-	delayMs: number,
+	waitMs: number,
 ): (...args: Parameters<T>) => void {
-	let timeoutId: ReturnType<typeof setTimeout> | undefined;
+	let timer: ReturnType<typeof setTimeout> | null = null;
 
 	return (...args: Parameters<T>) => {
-		if (timeoutId !== undefined) {
-			clearTimeout(timeoutId);
+		if (timer !== null) {
+			clearTimeout(timer);
 		}
-		timeoutId = setTimeout(() => {
+		timer = setTimeout(() => {
+			timer = null;
 			fn(...args);
-		}, delayMs);
+		}, waitMs);
 	};
 }

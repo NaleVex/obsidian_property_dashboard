@@ -1,81 +1,66 @@
-import { Notice, Plugin, WorkspaceLeaf } from 'obsidian';
-import { BoardDataService } from './data/BoardDataService';
-import { PropertyKanbanPlugin as IPropertyKanbanPlugin } from './plugin-types';
-import { DEFAULT_SETTINGS } from './settings/defaults';
-import { PropertyKanbanSettingTab } from './settings/PropertyKanbanSettingTab';
-import { PluginSettings } from './settings/types';
+import { Notice, Plugin, TFolder } from 'obsidian';
 import {
-	PropertyKanbanView,
-	VIEW_TYPE_PROPERTY_KANBAN,
-} from './views/PropertyKanbanView';
+	createDefaultDocument,
+	serializeBoardDocument,
+} from './board/schema';
+import { BoardView, VIEW_TYPE_BOARD } from './views/BoardView';
 
-export default class PropertyKanbanPlugin
-	extends Plugin
-	implements IPropertyKanbanPlugin
-{
-	settings!: PluginSettings;
-	dataService!: BoardDataService;
-
+export default class PropertyKanbanPlugin extends Plugin {
 	async onload(): Promise<void> {
-		await this.loadSettings();
-
-		this.dataService = new BoardDataService(this);
-		this.dataService.init();
-
-		this.registerView(
-			VIEW_TYPE_PROPERTY_KANBAN,
-			(leaf) => new PropertyKanbanView(leaf, this),
-		);
-
-		this.addRibbonIcon('layout-grid', 'Open Property Kanban', () => {
-			void this.activateView();
-		});
+		this.registerView(VIEW_TYPE_BOARD, (leaf) => new BoardView(leaf));
+		this.registerExtensions(['board'], VIEW_TYPE_BOARD);
 
 		this.addCommand({
-			id: 'open-property-kanban',
-			name: 'Open Property Kanban board',
+			id: 'create-new-board',
+			name: 'Create new board',
 			callback: () => {
-				void this.activateView();
+				void this.createNewBoard();
 			},
 		});
 
-		this.addSettingTab(new PropertyKanbanSettingTab(this.app, this));
+		this.addRibbonIcon('layout-dashboard', 'Create new board', () => {
+			void this.createNewBoard();
+		});
 	}
 
 	onunload(): void {}
 
-	async loadSettings(): Promise<void> {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<PluginSettings>,
-		);
+	private getCreateFolder(): TFolder {
+		const activeFile = this.app.workspace.getActiveFile();
+		if (activeFile?.parent) {
+			return activeFile.parent;
+		}
+		return this.app.vault.getRoot();
 	}
 
-	async saveSettings(): Promise<void> {
-		await this.saveData(this.settings);
-		this.dataService?.onSettingsChanged();
-	}
+	private getUniqueBoardPath(folder: TFolder): string {
+		const folderPath = folder.path;
+		const prefix = folderPath ? `${folderPath}/` : '';
+		const base = 'Untitled';
+		let candidate = `${prefix}${base}.board`;
+		let index = 1;
 
-	async activateView(): Promise<void> {
-		const { workspace } = this.app;
-
-		let leaf: WorkspaceLeaf | null = workspace.getLeavesOfType(
-			VIEW_TYPE_PROPERTY_KANBAN,
-		)[0] ?? null;
-
-		if (!leaf) {
-			leaf = workspace.getRightLeaf(false);
-			if (!leaf) {
-				new Notice('Could not open Property Kanban view.');
-				return;
-			}
-			await leaf.setViewState({
-				type: VIEW_TYPE_PROPERTY_KANBAN,
-				active: true,
-			});
+		while (this.app.vault.getAbstractFileByPath(candidate)) {
+			candidate = `${prefix}${base} ${index}.board`;
+			index += 1;
 		}
 
-		workspace.revealLeaf(leaf);
+		return candidate;
+	}
+
+	async createNewBoard(): Promise<void> {
+		try {
+			const folder = this.getCreateFolder();
+			const path = this.getUniqueBoardPath(folder);
+			const name = path.split('/').pop()?.replace(/\.board$/, '') ?? 'Untitled';
+			const content = serializeBoardDocument(createDefaultDocument(name));
+			const file = await this.app.vault.create(path, content);
+
+			await this.app.workspace.getLeaf(true).openFile(file);
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : 'Could not create board file';
+			new Notice(message);
+		}
 	}
 }
