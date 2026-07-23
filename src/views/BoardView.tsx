@@ -89,7 +89,14 @@ export class BoardView extends TextFileView {
 
 	private syncNoteIndex(): void {
 		const boardPath = this.file?.path ?? '';
-		this.noteIndex.configure(this.document.settings, boardPath);
+		const activeView =
+			this.document.views.find((view) => view.id === this.document.activeViewId) ??
+			this.document.views[0];
+		this.noteIndex.configure(
+			this.document.settings,
+			boardPath,
+			activeView?.cardFields ?? [],
+		);
 	}
 
 	private updateDocument = (updater: (doc: BoardDocument) => BoardDocument): void => {

@@ -1,10 +1,12 @@
-import { App, EventRef, TFile } from 'obsidian';
+import { App, EventRef, Notice, TFile } from 'obsidian';
 import {
 	BoardSettings,
+	CardFieldDef,
 	UNKNOWN_COLUMN_ID,
 	UNKNOWN_COLUMN_LABEL,
 } from '../board/schema';
 import { fileMatchesLimitTo } from './limitTo';
+import { stringifyPropertyValue } from './propertyValue';
 import { getTriggerFromFrontmatter } from './trigger';
 import {
 	BoardCard,
@@ -26,8 +28,10 @@ export class NoteIndex {
 	private listeners = new Set<NoteIndexListener>();
 	private state: NoteIndexState = createEmptyState(true);
 	private settings: BoardSettings | null = null;
+	private cardFields: CardFieldDef[] = [];
 	private boardFilePath = '';
 	private cardIndex = new Map<string, BoardCard>();
+	private pendingUpdates = new Set<string>();
 	private cleanups: Array<() => void> = [];
 	private debouncedRebuild: () => void;
 
@@ -49,9 +53,14 @@ export class NoteIndex {
 		};
 	}
 
-	configure(settings: BoardSettings, boardFilePath: string): void {
+	configure(
+		settings: BoardSettings,
+		boardFilePath: string,
+		cardFields: CardFieldDef[] = [],
+	): void {
 		this.settings = settings;
 		this.boardFilePath = boardFilePath;
+		this.cardFields = cardFields;
 		this.rebuild();
 	}
 
@@ -66,6 +75,9 @@ export class NoteIndex {
 			this.app.metadataCache,
 			this.app.metadataCache.on('changed', (file) => {
 				if (!(file instanceof TFile)) {
+					return;
+				}
+				if (this.pendingUpdates.has(file.path)) {
 					return;
 				}
 				this.updateFile(file);
@@ -114,6 +126,62 @@ export class NoteIndex {
 			cleanup();
 		}
 		this.cleanups = [];
+	}
+
+	async updateTriggerProperty(filePath: string, columnId: string): Promise<void> {
+		if (!this.settings) {
+			return;
+		}
+
+		const file = this.app.vault.getAbstractFileByPath(filePath);
+		if (!(file instanceof TFile)) {
+			new Notice('Could not find note to update.');
+			return;
+		}
+
+		const card = this.cardIndex.get(filePath);
+		if (!card || card.columnId === columnId) {
+			return;
+		}
+
+		const previous = { ...card };
+		const newValue = columnId === UNKNOWN_COLUMN_ID ? '' : columnId;
+
+		this.pendingUpdates.add(filePath);
+		this.moveCardOptimistically(filePath, columnId, newValue);
+
+		try {
+			await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+				frontmatter[this.settings!.triggerProperty] = newValue;
+			});
+		} catch (error) {
+			this.cardIndex.set(filePath, previous);
+			this.setState(this.buildStateFromIndex(false));
+			const message =
+				error instanceof Error ? error.message : 'Failed to update property';
+			new Notice(message);
+		} finally {
+			window.setTimeout(() => {
+				this.pendingUpdates.delete(filePath);
+			}, 300);
+		}
+	}
+
+	private moveCardOptimistically(
+		filePath: string,
+		columnId: string,
+		rawValue: string,
+	): void {
+		const card = this.cardIndex.get(filePath);
+		if (!card) {
+			return;
+		}
+		this.cardIndex.set(filePath, {
+			...card,
+			columnId,
+			rawValue,
+		});
+		this.setState(this.buildStateFromIndex(false));
 	}
 
 	private emit(): void {
@@ -177,7 +245,29 @@ export class NoteIndex {
 
 	private renameCard(oldPath: string, file: TFile): void {
 		this.cardIndex.delete(oldPath);
+		this.pendingUpdates.delete(oldPath);
 		this.updateFile(file);
+	}
+
+	private readCardFields(
+		frontmatter: Record<string, unknown> | undefined,
+	): Record<string, string | null> {
+		const fields: Record<string, string | null> = {};
+		for (const def of this.cardFields) {
+			if (!def.property) {
+				fields[def.id] = null;
+				continue;
+			}
+			if (
+				!frontmatter ||
+				!Object.prototype.hasOwnProperty.call(frontmatter, def.property)
+			) {
+				fields[def.id] = null;
+				continue;
+			}
+			fields[def.id] = stringifyPropertyValue(frontmatter[def.property]);
+		}
+		return fields;
 	}
 
 	private createCardFromFile(file: TFile): BoardCard | null {
@@ -194,8 +284,9 @@ export class NoteIndex {
 		}
 
 		const cache = this.app.metadataCache.getFileCache(file);
+		const frontmatter = cache?.frontmatter;
 		const trigger = getTriggerFromFrontmatter(
-			cache?.frontmatter,
+			frontmatter,
 			this.settings.triggerProperty,
 			this.settings.values,
 		);
@@ -210,6 +301,7 @@ export class NoteIndex {
 			title: file.basename,
 			columnId: trigger.columnId,
 			rawValue: trigger.rawValue,
+			fields: this.readCardFields(frontmatter),
 		};
 	}
 

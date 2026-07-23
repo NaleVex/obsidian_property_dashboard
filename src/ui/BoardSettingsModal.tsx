@@ -1,32 +1,36 @@
-import { useState } from 'react';
-import { BoardSettings, LimitTo } from '../board/schema';
+import { App, Modal } from 'obsidian';
+import { Root, createRoot } from 'react-dom/client';
+import { StrictMode, useState } from 'react';
+import { BoardDocument, BoardSettings, LimitTo } from '../board/schema';
 import { normalizeFolderPath } from '../data/limitTo';
-import { useBoardApp } from './BoardAppContext';
 import { FolderSuggestModal } from './FolderSuggestModal';
 
-interface BoardSettingsPanelProps {
-	open: boolean;
-	onClose: () => void;
+export interface BoardSettingsModalHost {
+	app: App;
+	getDocument: () => BoardDocument;
+	updateDocument: (updater: (doc: BoardDocument) => BoardDocument) => void;
 }
 
-export function BoardSettingsPanel({ open, onClose }: BoardSettingsPanelProps) {
-	const { app, document, updateDocument } = useBoardApp();
+function BoardSettingsForm({
+	host,
+}: {
+	host: BoardSettingsModalHost;
+}) {
+	const [, setTick] = useState(0);
 	const [newValue, setNewValue] = useState('');
+	const settings = host.getDocument().settings;
 
-	if (!open) {
-		return null;
-	}
-
-	const settings = document.settings;
+	const refresh = () => setTick((value) => value + 1);
 
 	const patchSettings = (patch: Partial<BoardSettings>) => {
-		updateDocument((doc) => ({
+		host.updateDocument((doc) => ({
 			...doc,
 			settings: {
 				...doc.settings,
 				...patch,
 			},
 		}));
+		refresh();
 	};
 
 	const setLimitTo = (limitTo: LimitTo) => {
@@ -65,7 +69,7 @@ export function BoardSettingsPanel({ open, onClose }: BoardSettingsPanelProps) {
 	};
 
 	const openFolderPicker = () => {
-		new FolderSuggestModal(app, (folder) => {
+		new FolderSuggestModal(host.app, (folder) => {
 			const path = normalizeFolderPath(folder.path);
 			setLimitTo({ mode: 'folder', path });
 		}).open();
@@ -77,14 +81,7 @@ export function BoardSettingsPanel({ open, onClose }: BoardSettingsPanelProps) {
 			: '';
 
 	return (
-		<div className="pk-settings">
-			<div className="pk-settings-header">
-				<h2 className="pk-settings-title">Board settings</h2>
-				<button type="button" className="pk-text-button" onClick={onClose}>
-					Close
-				</button>
-			</div>
-
+		<div className="pk-settings pk-settings-modal">
 			<label className="pk-field">
 				<span className="pk-field-label">Trigger property</span>
 				<input
@@ -203,4 +200,32 @@ export function BoardSettingsPanel({ open, onClose }: BoardSettingsPanelProps) {
 			</div>
 		</div>
 	);
+}
+
+export class BoardSettingsModal extends Modal {
+	private root: Root | null = null;
+
+	constructor(
+		app: App,
+		private host: BoardSettingsModalHost,
+	) {
+		super(app);
+	}
+
+	onOpen(): void {
+		this.titleEl.setText('Board settings');
+		this.modalEl.addClass('pk-board-settings-modal');
+		this.root = createRoot(this.contentEl);
+		this.root.render(
+			<StrictMode>
+				<BoardSettingsForm host={this.host} />
+			</StrictMode>,
+		);
+	}
+
+	onClose(): void {
+		this.root?.unmount();
+		this.root = null;
+		this.contentEl.empty();
+	}
 }

@@ -126,9 +126,29 @@
 	opacity: 1;
 }
 
-.pk-header > .pk-icon-button {
+.pk-header > .pk-icon-button,
+.pk-header-settings {
 	flex-shrink: 0;
 	margin-left: auto;
+}
+
+.pk-settings-modal {
+	max-width: none;
+	padding: 0;
+	overflow: visible;
+}
+
+.pk-panel-flat {
+	border: none;
+	background: transparent;
+	padding: 0;
+	max-height: none;
+	overflow: visible;
+}
+
+.pk-view-settings-modal .modal-content {
+	padding-top: 0;
+	min-width: min(640px, 90vw);
 }
 
 .pk-icon-button,
@@ -192,9 +212,185 @@
 .pk-kanban-toolbar {
 	display: flex;
 	align-items: center;
-	justify-content: flex-end;
+	justify-content: flex-start;
+	gap: 6px;
 	flex-shrink: 0;
 	min-height: 28px;
+}
+
+.pk-kanban-instruments {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.pk-toolbar-button {
+	appearance: none;
+	border: none;
+	background: transparent;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	padding: 4px 8px;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+}
+
+.pk-toolbar-button:hover,
+.pk-toolbar-button-active {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+}
+
+.pk-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 10px 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+	flex-shrink: 0;
+	max-height: 40%;
+	overflow-y: auto;
+}
+
+.pk-panel-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.pk-panel-title {
+	margin: 0;
+	font-size: var(--font-ui-small);
+	font-weight: 600;
+}
+
+.pk-panel-hint {
+	margin: 0;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+.pk-field-rows {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.pk-field-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.pk-field-row .pk-input,
+.pk-field-row .pk-select {
+	flex: 1 1 100px;
+	min-width: 80px;
+	width: auto;
+}
+
+.pk-select {
+	padding: 6px 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+}
+
+.pk-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.pk-cards-info-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.pk-cards-info-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px;
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+}
+
+.pk-cards-info-label {
+	flex: 1;
+	min-width: 0;
+	font-size: var(--font-ui-small);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.pk-drag-handle {
+	appearance: none;
+	border: none;
+	background: transparent;
+	color: var(--text-muted);
+	cursor: grab;
+	display: inline-flex;
+	padding: 2px;
+}
+
+.pk-drag-handle:active {
+	cursor: grabbing;
+}
+
+.pk-switch {
+	position: relative;
+	display: inline-flex;
+	width: 32px;
+	height: 18px;
+	flex-shrink: 0;
+	cursor: pointer;
+}
+
+.pk-switch input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.pk-switch-slider {
+	position: absolute;
+	inset: 0;
+	background: var(--background-modifier-border);
+	border-radius: 999px;
+	transition: background 0.15s ease;
+}
+
+.pk-switch-slider::before {
+	content: '';
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	left: 2px;
+	top: 2px;
+	border-radius: 50%;
+	background: var(--background-primary);
+	transition: transform 0.15s ease;
+}
+
+.pk-switch input:checked + .pk-switch-slider {
+	background: var(--interactive-accent);
+}
+
+.pk-switch input:checked + .pk-switch-slider::before {
+	transform: translateX(14px);
 }
 
 .pk-board-loading,
@@ -243,26 +439,37 @@
 	font-size: var(--font-ui-smaller);
 }
 
+.pk-column-over {
+	border-color: var(--interactive-accent);
+}
+
 .pk-column-cards {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
 	padding: 10px;
 	overflow-y: auto;
-	min-height: 0;
+	min-height: 40px;
+	flex: 1;
+	align-items: stretch;
 }
 
 .pk-card {
 	appearance: none;
 	display: block;
 	width: 100%;
+	flex: 0 0 auto;
+	height: auto;
+	min-height: 0;
 	text-align: left;
-	padding: 10px 12px;
+	padding: 0;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-s);
 	background: var(--background-primary);
 	color: var(--text-normal);
-	cursor: pointer;
+	cursor: grab;
+	box-sizing: border-box;
+	overflow: visible;
 }
 
 .pk-card:hover {
@@ -270,10 +477,88 @@
 	background: var(--background-modifier-hover);
 }
 
+.pk-board-dragging .pk-column-cards {
+	overflow-y: hidden;
+}
+
+.pk-card.is-dragging {
+	opacity: 0.35;
+	pointer-events: none;
+}
+
+.pk-card-preview {
+	box-shadow: var(--shadow-l);
+	cursor: grabbing;
+	opacity: 0.95;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	box-sizing: border-box;
+}
+
+.pk-card-preview .pk-card-open {
+	appearance: none;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 4px;
+	width: 100%;
+	margin: 0;
+	padding: 10px 12px;
+	border: none;
+	background: transparent;
+	color: inherit;
+	text-align: left;
+	white-space: normal;
+	line-height: 1.35;
+}
+
+/* Obsidian button defaults clip multi-line content — force full height */
+.pk-view .pk-card button.pk-card-open,
+.pk-view button.pk-card-open {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: stretch !important;
+	justify-content: flex-start !important;
+	gap: 4px;
+	width: 100% !important;
+	height: auto !important;
+	min-height: 0 !important;
+	max-height: none !important;
+	margin: 0 !important;
+	padding: 10px 12px !important;
+	border: none !important;
+	border-radius: 0 !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	color: inherit !important;
+	text-align: left !important;
+	white-space: normal !important;
+	overflow: visible !important;
+	line-height: 1.35 !important;
+	cursor: inherit;
+}
+
 .pk-card-title {
+	display: block;
 	font-size: var(--font-ui-small);
 	font-weight: 500;
 	word-break: break-word;
+	white-space: normal;
+}
+
+.pk-card-field {
+	display: block;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	word-break: break-word;
+	white-space: normal;
+}
+
+.pk-card-muted {
+	color: var(--text-muted);
 }
 
 .pk-settings {

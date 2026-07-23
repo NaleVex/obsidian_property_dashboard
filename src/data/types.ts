@@ -4,6 +4,8 @@ export interface BoardCard {
 	title: string;
 	columnId: string;
 	rawValue: string;
+	/** Values keyed by CardFieldDef.id; null means property missing. */
+	fields: Record<string, string | null>;
 }
 
 export interface BoardColumn {

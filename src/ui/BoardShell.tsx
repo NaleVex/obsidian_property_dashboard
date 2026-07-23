@@ -1,8 +1,8 @@
 import { Menu, setIcon } from 'obsidian';
-import { useEffect, useRef, useState, type MouseEvent } from 'react';
-import { BoardViewConfig, createId } from '../board/schema';
+import { useEffect, useRef, type MouseEvent } from 'react';
+import { BoardViewConfig, createDefaultKanbanView } from '../board/schema';
 import { useBoardApp } from './BoardAppContext';
-import { BoardSettingsPanel } from './BoardSettingsPanel';
+import { BoardSettingsModal } from './BoardSettingsModal';
 import { KanbanView } from './KanbanView';
 import { promptForText } from './TextPromptModal';
 
@@ -20,12 +20,23 @@ function Icon({ name }: { name: string }) {
 
 export function BoardShell() {
 	const { app, document, updateDocument } = useBoardApp();
-	const [settingsOpen, setSettingsOpen] = useState(false);
+	const documentRef = useRef(document);
+	const updateDocumentRef = useRef(updateDocument);
+	documentRef.current = document;
+	updateDocumentRef.current = updateDocument;
 
 	const activeView =
 		document.views.find((view) => view.id === document.activeViewId) ??
 		document.views[0] ??
 		null;
+
+	const openBoardSettings = () => {
+		new BoardSettingsModal(app, {
+			app,
+			getDocument: () => documentRef.current,
+			updateDocument: (updater) => updateDocumentRef.current(updater),
+		}).open();
+	};
 
 	const setActiveView = (viewId: string) => {
 		updateDocument((doc) => ({
@@ -46,18 +57,11 @@ export function BoardShell() {
 				return;
 			}
 			const trimmed = name.trim() || 'Kanban';
-			const id = createId();
+			const view = createDefaultKanbanView(trimmed);
 			updateDocument((doc) => ({
 				...doc,
-				views: [
-					...doc.views,
-					{
-						id,
-						type: 'kanban',
-						name: trimmed,
-					},
-				],
-				activeViewId: id,
+				views: [...doc.views, view],
+				activeViewId: view.id,
 			}));
 		});
 	};
@@ -159,22 +163,17 @@ export function BoardShell() {
 
 				<button
 					type="button"
-					className="pk-icon-button"
+					className="pk-icon-button pk-header-settings"
 					aria-label="Board settings"
 					title="Board settings"
-					onClick={() => setSettingsOpen((open) => !open)}
+					onClick={openBoardSettings}
 				>
 					<Icon name="settings" />
 				</button>
 			</header>
 
-			{settingsOpen ? (
-				<BoardSettingsPanel
-					open={settingsOpen}
-					onClose={() => setSettingsOpen(false)}
-				/>
-			) : activeView?.type === 'kanban' ? (
-				<KanbanView />
+			{activeView?.type === 'kanban' ? (
+				<KanbanView view={activeView} />
 			) : (
 				<div className="pk-board-empty">No views yet. Add a kanban view.</div>
 			)}

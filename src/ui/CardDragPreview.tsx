@@ -1,0 +1,56 @@
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { BoardViewConfig } from '../board/schema';
+import { BoardCard as BoardCardType } from '../data/types';
+import { CardBody } from './BoardCard';
+
+interface CardDragPreviewProps {
+	card: BoardCardType;
+	view: BoardViewConfig;
+	/** Offset from pointer to top-left of the preview, captured at drag start. */
+	offset: { x: number; y: number };
+	/** Initial top-left of the preview in viewport coordinates. */
+	initialPosition: { x: number; y: number };
+	width: number;
+}
+
+export function CardDragPreview({
+	card,
+	view,
+	offset,
+	initialPosition,
+	width,
+}: CardDragPreviewProps) {
+	const [pos, setPos] = useState(initialPosition);
+
+	useEffect(() => {
+		const onMove = (event: PointerEvent) => {
+			setPos({
+				x: event.clientX - offset.x,
+				y: event.clientY - offset.y,
+			});
+		};
+
+		window.addEventListener('pointermove', onMove);
+		return () => {
+			window.removeEventListener('pointermove', onMove);
+		};
+	}, [offset.x, offset.y]);
+
+	return createPortal(
+		<div
+			className="pk-card pk-card-preview"
+			style={{
+				position: 'fixed',
+				left: pos.x,
+				top: pos.y,
+				width,
+				pointerEvents: 'none',
+				zIndex: 10000,
+			}}
+		>
+			<CardBody card={card} view={view} />
+		</div>,
+		document.body,
+	);
+}
