@@ -1,7 +1,7 @@
 import { App, EventRef, Notice, TFile } from 'obsidian';
 import {
-	BoardSettings,
 	CardFieldDef,
+	NoteIndexConfig,
 	UNKNOWN_COLUMN_ID,
 	UNKNOWN_COLUMN_LABEL,
 } from '../board/schema';
@@ -28,7 +28,7 @@ function createEmptyState(isLoading: boolean): NoteIndexState {
 export class NoteIndex {
 	private listeners = new Set<NoteIndexListener>();
 	private state: NoteIndexState = createEmptyState(true);
-	private settings: BoardSettings | null = null;
+	private settings: NoteIndexConfig | null = null;
 	private cardFields: CardFieldDef[] = [];
 	private boardFilePath = '';
 	private cardIndex = new Map<string, BoardCard>();
@@ -56,7 +56,7 @@ export class NoteIndex {
 	}
 
 	configure(
-		settings: BoardSettings,
+		settings: NoteIndexConfig,
 		boardFilePath: string,
 		cardFields: CardFieldDef[] = [],
 	): void {

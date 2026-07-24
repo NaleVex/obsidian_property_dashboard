@@ -3,6 +3,7 @@ import { Root, createRoot } from 'react-dom/client';
 import { StrictMode, useState } from 'react';
 import { BoardDocument, BoardViewConfig } from '../board/schema';
 import { CardFieldsEditor } from './CardFieldsEditor';
+import { ViewColumnSettings } from './ViewColumnSettings';
 
 export interface ViewSettingsModalHost {
 	app: App;
@@ -36,6 +37,7 @@ function ViewSettingsForm({
 
 	return (
 		<div className="pk-settings pk-settings-modal">
+			<ViewColumnSettings view={view} onUpdateView={onUpdateView} />
 			<CardFieldsEditor view={view} onUpdateView={onUpdateView} />
 		</div>
 	);

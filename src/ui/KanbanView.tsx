@@ -27,15 +27,15 @@ interface DragPreviewState {
 	width: number;
 }
 
-const COLUMN_COLOR_PRESETS = [
-	'#e74c3c',
-	'#e67e22',
-	'#f1c40f',
-	'#2ecc71',
-	'#1abc9c',
-	'#3498db',
-	'#9b59b6',
-	'#95a5a6',
+const COLUMN_COLOR_PRESETS: Array<{ hex: string; name: string }> = [
+	{ hex: '#e74c3c', name: 'Red' },
+	{ hex: '#e67e22', name: 'Orange' },
+	{ hex: '#f1c40f', name: 'Yellow' },
+	{ hex: '#2ecc71', name: 'Green' },
+	{ hex: '#1abc9c', name: 'Teal' },
+	{ hex: '#3498db', name: 'Blue' },
+	{ hex: '#9b59b6', name: 'Purple' },
+	{ hex: '#95a5a6', name: 'Gray' },
 ];
 
 function ToolbarIcon({ name }: { name: string }) {
@@ -104,21 +104,21 @@ export function KanbanView({ view }: KanbanViewProps) {
 	};
 
 	const setColumnColor = (columnId: string, color: string | null) => {
-		updateDocument((doc) => {
-			const columnColors = { ...doc.settings.columnColors };
-			if (!color) {
-				delete columnColors[columnId];
-			} else {
-				columnColors[columnId] = color;
-			}
-			return {
-				...doc,
-				settings: {
-					...doc.settings,
-					columnColors,
-				},
-			};
-		});
+		updateDocument((doc) => ({
+			...doc,
+			views: doc.views.map((item) => {
+				if (item.id !== view.id) {
+					return item;
+				}
+				const columnColors = { ...item.columnColors };
+				if (!color) {
+					delete columnColors[columnId];
+				} else {
+					columnColors[columnId] = color;
+				}
+				return { ...item, columnColors };
+			}),
+		}));
 	};
 
 	const openColumnMenu = (
@@ -127,7 +127,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 	) => {
 		event.preventDefault();
 		const menu = new Menu();
-		const current = document.settings.columnColors[columnId];
+		const current = view.columnColors[columnId];
 
 		menu.addItem((item) => {
 			item.setTitle('Color').setIsLabel(true);
@@ -146,18 +146,14 @@ export function KanbanView({ view }: KanbanViewProps) {
 			menu.addItem((item) => {
 				const title = window.document.createDocumentFragment();
 				const swatch = window.document.createElement('span');
-				swatch.style.display = 'inline-block';
-				swatch.style.width = '10px';
-				swatch.style.height = '10px';
-				swatch.style.borderRadius = '50%';
-				swatch.style.background = preset;
-				swatch.style.marginRight = '8px';
+				swatch.className = 'pk-color-swatch';
+				swatch.style.background = preset.hex;
 				title.appendChild(swatch);
-				title.appendChild(window.document.createTextNode(preset));
+				title.appendChild(window.document.createTextNode(preset.name));
 				item.setTitle(title).onClick(() => {
-					setColumnColor(columnId, preset);
+					setColumnColor(columnId, preset.hex);
 				});
-				if (current === preset) {
+				if (current === preset.hex) {
 					item.setChecked(true);
 				}
 			});
@@ -354,7 +350,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 									key={column.id}
 									column={column}
 									view={view}
-									color={document.settings.columnColors[column.id]}
+									color={view.columnColors[column.id]}
 									onHeaderContextMenu={(event) =>
 										openColumnMenu(event, column.id)
 									}

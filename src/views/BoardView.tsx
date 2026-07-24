@@ -3,6 +3,8 @@ import { Root, createRoot } from 'react-dom/client';
 import { StrictMode } from 'react';
 import {
 	BoardDocument,
+	DEFAULT_TRIGGER_PROPERTY,
+	DEFAULT_VALUES,
 	parseBoardDocument,
 	serializeBoardDocument,
 } from '../board/schema';
@@ -93,7 +95,11 @@ export class BoardView extends TextFileView {
 			this.document.views.find((view) => view.id === this.document.activeViewId) ??
 			this.document.views[0];
 		this.noteIndex.configure(
-			this.document.settings,
+			{
+				limitTo: this.document.settings.limitTo,
+				triggerProperty: activeView?.triggerProperty ?? DEFAULT_TRIGGER_PROPERTY,
+				values: activeView?.values ?? [...DEFAULT_VALUES],
+			},
 			boardPath,
 			activeView?.cardFields ?? [],
 		);

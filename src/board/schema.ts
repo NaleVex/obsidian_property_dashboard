@@ -50,16 +50,23 @@ export interface BoardViewConfig {
 	id: string;
 	type: BoardViewType;
 	name: string;
+	triggerProperty: string;
+	values: string[];
+	columnColors: Record<string, string>;
 	cardFields: CardFieldDef[];
 	cardInfo: CardInfoItem[];
 	filters: FilterRule[];
 }
 
 export interface BoardSettings {
-	triggerProperty: string;
 	limitTo: LimitTo;
+}
+
+/** Effective indexing config: board scope + active view column settings. */
+export interface NoteIndexConfig {
+	limitTo: LimitTo;
+	triggerProperty: string;
 	values: string[];
-	columnColors: Record<string, string>;
 }
 
 export interface BoardDocument {
@@ -94,14 +101,28 @@ export function createDefaultFilterRule(): FilterRule {
 	};
 }
 
+export const DEFAULT_TRIGGER_PROPERTY = 'status';
+export const DEFAULT_VALUES = ['todo', 'in-progress', 'done'];
+
 export function createDefaultKanbanView(name = 'Kanban'): BoardViewConfig {
 	return {
 		id: createId(),
 		type: 'kanban',
 		name,
+		triggerProperty: DEFAULT_TRIGGER_PROPERTY,
+		values: [...DEFAULT_VALUES],
+		columnColors: {},
 		cardFields: [],
 		cardInfo: createDefaultCardInfo(),
 		filters: [],
+	};
+}
+
+export function cloneKanbanView(source: BoardViewConfig): BoardViewConfig {
+	return {
+		...structuredClone(source),
+		id: createId(),
+		name: `${source.name} copy`,
 	};
 }
 
@@ -111,10 +132,7 @@ export function createDefaultDocument(name = 'Untitled'): BoardDocument {
 		version: BOARD_VERSION,
 		name,
 		settings: {
-			triggerProperty: 'status',
 			limitTo: { mode: 'all' },
-			values: ['todo', 'in-progress', 'done'],
-			columnColors: {},
 		},
 		views: [view],
 		activeViewId: view.id,
@@ -371,7 +389,56 @@ function parseFilters(raw: unknown): FilterRule[] {
 	return filters;
 }
 
-function parseViews(raw: unknown): BoardViewConfig[] {
+function parseValues(raw: unknown, fallback: string[]): string[] {
+	if (!Array.isArray(raw)) {
+		return [...fallback];
+	}
+	const values = raw
+		.filter((value): value is string => typeof value === 'string')
+		.map((value) => value.trim())
+		.filter((value) => value.length > 0);
+	return values.length > 0 ? values : [...fallback];
+}
+
+function parseTriggerProperty(raw: unknown, fallback: string): string {
+	if (typeof raw === 'string' && raw.trim()) {
+		return raw.trim();
+	}
+	return fallback;
+}
+
+interface LegacyBoardSettings {
+	limitTo: LimitTo;
+	triggerProperty: string;
+	values: string[];
+	columnColors: Record<string, string>;
+}
+
+function parseLegacySettings(raw: unknown): LegacyBoardSettings {
+	const defaults = {
+		triggerProperty: DEFAULT_TRIGGER_PROPERTY,
+		values: [...DEFAULT_VALUES],
+		columnColors: {} as Record<string, string>,
+	};
+	if (!isRecord(raw)) {
+		return {
+			limitTo: { mode: 'all' },
+			...defaults,
+		};
+	}
+
+	return {
+		limitTo: parseLimitTo(raw.limitTo),
+		triggerProperty: parseTriggerProperty(raw.triggerProperty, defaults.triggerProperty),
+		values: parseValues(raw.values, defaults.values),
+		columnColors: parseColumnColors(raw.columnColors),
+	};
+}
+
+function parseViews(
+	raw: unknown,
+	legacy: LegacyBoardSettings,
+): BoardViewConfig[] {
 	if (!Array.isArray(raw)) {
 		return [];
 	}
@@ -388,10 +455,23 @@ function parseViews(raw: unknown): BoardViewConfig[] {
 			continue;
 		}
 		const cardFields = parseCardFields(item.cardFields);
+		const hasViewTrigger = typeof item.triggerProperty === 'string';
+		const hasViewValues = Array.isArray(item.values);
+		const hasViewColors = isRecord(item.columnColors);
+
 		views.push({
 			id: item.id,
 			type: 'kanban',
 			name: item.name.trim() || 'Kanban',
+			triggerProperty: hasViewTrigger
+				? parseTriggerProperty(item.triggerProperty, legacy.triggerProperty)
+				: legacy.triggerProperty,
+			values: hasViewValues
+				? parseValues(item.values, legacy.values)
+				: [...legacy.values],
+			columnColors: hasViewColors
+				? parseColumnColors(item.columnColors)
+				: { ...legacy.columnColors },
 			cardFields,
 			cardInfo: parseCardInfo(item.cardInfo, cardFields),
 			filters: parseFilters(item.filters),
@@ -411,32 +491,6 @@ function parseColumnColors(raw: unknown): Record<string, string> {
 		}
 	}
 	return colors;
-}
-
-function parseSettings(raw: unknown): BoardSettings {
-	const defaults = createDefaultDocument().settings;
-	if (!isRecord(raw)) {
-		return defaults;
-	}
-
-	const triggerProperty =
-		typeof raw.triggerProperty === 'string' && raw.triggerProperty.trim()
-			? raw.triggerProperty.trim()
-			: defaults.triggerProperty;
-
-	const values = Array.isArray(raw.values)
-		? raw.values
-				.filter((value): value is string => typeof value === 'string')
-				.map((value) => value.trim())
-				.filter((value) => value.length > 0)
-		: defaults.values;
-
-	return {
-		triggerProperty,
-		limitTo: parseLimitTo(raw.limitTo),
-		values: values.length > 0 ? values : [...defaults.values],
-		columnColors: parseColumnColors(raw.columnColors),
-	};
 }
 
 /** Parse board JSON; always returns a usable document (repairs missing pieces). */
@@ -464,9 +518,10 @@ export function parseBoardDocument(raw: string, fallbackName = 'Untitled'): Boar
 			? parsed.name.trim()
 			: fallbackName;
 
-	const settings = parseSettings(parsed.settings);
+	const legacy = parseLegacySettings(parsed.settings);
+	const settings: BoardSettings = { limitTo: legacy.limitTo };
 	const views = Array.isArray(parsed.views)
-		? parseViews(parsed.views)
+		? parseViews(parsed.views, legacy)
 		: defaults.views;
 
 	let activeViewId =
@@ -480,7 +535,7 @@ export function parseBoardDocument(raw: string, fallbackName = 'Untitled'): Boar
 		version: BOARD_VERSION,
 		name,
 		settings,
-		views,
+		views: views.length > 0 ? views : defaults.views,
 		activeViewId,
 	};
 }

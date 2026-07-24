@@ -1,6 +1,10 @@
 import { Menu, setIcon } from 'obsidian';
 import { useEffect, useRef, type MouseEvent } from 'react';
-import { BoardViewConfig, createDefaultKanbanView } from '../board/schema';
+import {
+	BoardViewConfig,
+	cloneKanbanView,
+	createDefaultKanbanView,
+} from '../board/schema';
 import { useBoardApp } from './BoardAppContext';
 import { BoardSettingsModal } from './BoardSettingsModal';
 import { KanbanView } from './KanbanView';
@@ -89,6 +93,15 @@ export function BoardShell() {
 		});
 	};
 
+	const copyView = (view: BoardViewConfig) => {
+		const cloned = cloneKanbanView(view);
+		updateDocument((doc) => ({
+			...doc,
+			views: [...doc.views, cloned],
+			activeViewId: cloned.id,
+		}));
+	};
+
 	const deleteView = (viewId: string) => {
 		updateDocument((doc) => {
 			const views = doc.views.filter((view) => view.id !== viewId);
@@ -110,6 +123,11 @@ export function BoardShell() {
 		menu.addItem((item) => {
 			item.setTitle('Rename').setIcon('pencil').onClick(() => {
 				renameView(view);
+			});
+		});
+		menu.addItem((item) => {
+			item.setTitle('Copy').setIcon('copy').onClick(() => {
+				copyView(view);
 			});
 		});
 		menu.addItem((item) => {
