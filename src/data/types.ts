@@ -6,6 +6,10 @@ export interface BoardCard {
 	rawValue: string;
 	/** Values keyed by CardFieldDef.id; null means property missing. */
 	fields: Record<string, string | null>;
+	/** Snapshot of note frontmatter for filter evaluation. */
+	frontmatter: Record<string, unknown>;
+	/** Note body with YAML frontmatter stripped. */
+	body: string;
 }
 
 export interface BoardColumn {

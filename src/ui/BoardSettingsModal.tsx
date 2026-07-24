@@ -54,9 +54,13 @@ function BoardSettingsForm({
 	};
 
 	const removeValue = (index: number) => {
-		patchSettings({
-			values: settings.values.filter((_, i) => i !== index),
-		});
+		const removed = settings.values[index];
+		const values = settings.values.filter((_, i) => i !== index);
+		const columnColors = { ...settings.columnColors };
+		if (removed) {
+			delete columnColors[removed];
+		}
+		patchSettings({ values, columnColors });
 	};
 
 	const addValue = () => {

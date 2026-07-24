@@ -241,6 +241,22 @@
 	background: var(--background-modifier-hover);
 }
 
+.pk-toolbar-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 16px;
+	height: 16px;
+	margin-left: 6px;
+	padding: 0 4px;
+	border-radius: 999px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-size: 10px;
+	font-weight: 600;
+	line-height: 1;
+}
+
 .pk-panel {
 	display: flex;
 	flex-direction: column;
@@ -393,6 +409,82 @@
 	transform: translateX(14px);
 }
 
+.pk-filter-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.pk-filter-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: wrap;
+	padding: 8px;
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+}
+
+.pk-filter-row .pk-select,
+.pk-filter-row .pk-input {
+	width: auto;
+	min-width: 0;
+	flex: 0 1 auto;
+}
+
+.pk-filter-combinator {
+	width: 72px;
+	flex: 0 0 72px;
+}
+
+.pk-filter-source {
+	width: 100px;
+	flex: 0 0 100px;
+}
+
+.pk-filter-property-wrap {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	flex: 1 1 140px;
+	min-width: 120px;
+}
+
+.pk-filter-property-wrap .pk-filter-property {
+	flex: 1 1 auto;
+	min-width: 80px;
+}
+
+.pk-filter-property-wrap .pk-filter-property-pick {
+	flex: 0 0 auto;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+}
+
+.pk-filter-numeric {
+	flex: 0 0 auto;
+}
+
+.pk-filter-op {
+	width: 120px;
+	flex: 0 0 120px;
+}
+
+.pk-filter-value {
+	flex: 1 1 120px;
+	min-width: 100px;
+}
+
+.pk-filter-actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-left: auto;
+	flex-shrink: 0;
+}
+
 .pk-board-loading,
 .pk-board-empty {
 	color: var(--text-muted);
@@ -420,6 +512,14 @@
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-m);
 	min-height: 120px;
+}
+
+.pk-column-colored {
+	border-left: 3px solid var(--pk-column-accent);
+}
+
+.pk-column-colored .pk-column-header {
+	box-shadow: inset 0 -2px 0 0 color-mix(in srgb, var(--pk-column-accent) 35%, transparent);
 }
 
 .pk-column-header {

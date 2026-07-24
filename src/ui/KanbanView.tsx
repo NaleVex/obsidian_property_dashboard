@@ -7,14 +7,16 @@ import {
 	useSensor,
 	useSensors,
 } from '@dnd-kit/core';
-import { setIcon } from 'obsidian';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Menu, setIcon } from 'obsidian';
+import { MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { BoardViewConfig } from '../board/schema';
+import { countCards, filterColumns } from '../data/filterCards';
 import { BoardCard as BoardCardType } from '../data/types';
 import { useBoardApp } from './BoardAppContext';
 import { BoardColumn } from './BoardColumn';
 import { CardDragPreview } from './CardDragPreview';
 import { CardsInfoPanel } from './CardsInfoPanel';
+import { FilterPanel } from './FilterPanel';
 import { ViewSettingsModal } from './ViewSettingsModal';
 import { useNoteIndex } from './hooks/useNoteIndex';
 
@@ -24,6 +26,17 @@ interface DragPreviewState {
 	initialPosition: { x: number; y: number };
 	width: number;
 }
+
+const COLUMN_COLOR_PRESETS = [
+	'#e74c3c',
+	'#e67e22',
+	'#f1c40f',
+	'#2ecc71',
+	'#1abc9c',
+	'#3498db',
+	'#9b59b6',
+	'#95a5a6',
+];
 
 function ToolbarIcon({ name }: { name: string }) {
 	const ref = useRef<HTMLSpanElement>(null);
@@ -42,7 +55,7 @@ interface KanbanViewProps {
 export function KanbanView({ view }: KanbanViewProps) {
 	const { app, document, updateDocument, noteIndex } = useBoardApp();
 	const state = useNoteIndex(noteIndex);
-	const [panel, setPanel] = useState<'cardsInfo' | null>(null);
+	const [panel, setPanel] = useState<'cardsInfo' | 'filter' | null>(null);
 	const [dragPreview, setDragPreview] = useState<DragPreviewState | null>(null);
 
 	const documentRef = useRef(document);
@@ -54,17 +67,27 @@ export function KanbanView({ view }: KanbanViewProps) {
 		useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
 	);
 
+	const filteredColumns = useMemo(
+		() => filterColumns(state.columns, view.filters),
+		[state.columns, view.filters],
+	);
+
+	const filteredCardCount = useMemo(
+		() => countCards(filteredColumns),
+		[filteredColumns],
+	);
+
 	const cardLookup = useMemo(() => {
 		const map = new Map<string, BoardCardType>();
-		for (const column of state.columns) {
+		for (const column of filteredColumns) {
 			for (const card of column.cards) {
 				map.set(card.id, card);
 			}
 		}
 		return map;
-	}, [state.columns]);
+	}, [filteredColumns]);
 
-	const togglePanel = (id: 'cardsInfo') => {
+	const togglePanel = (id: 'cardsInfo' | 'filter') => {
 		setPanel((current) => (current === id ? null : id));
 	};
 
@@ -78,6 +101,99 @@ export function KanbanView({ view }: KanbanViewProps) {
 			},
 			view.id,
 		).open();
+	};
+
+	const setColumnColor = (columnId: string, color: string | null) => {
+		updateDocument((doc) => {
+			const columnColors = { ...doc.settings.columnColors };
+			if (!color) {
+				delete columnColors[columnId];
+			} else {
+				columnColors[columnId] = color;
+			}
+			return {
+				...doc,
+				settings: {
+					...doc.settings,
+					columnColors,
+				},
+			};
+		});
+	};
+
+	const openColumnMenu = (
+		event: MouseEvent<HTMLElement>,
+		columnId: string,
+	) => {
+		event.preventDefault();
+		const menu = new Menu();
+		const current = document.settings.columnColors[columnId];
+
+		menu.addItem((item) => {
+			item.setTitle('Color').setIsLabel(true);
+		});
+
+		menu.addItem((item) => {
+			item.setTitle('Default').setIcon('circle-off').onClick(() => {
+				setColumnColor(columnId, null);
+			});
+			if (!current) {
+				item.setChecked(true);
+			}
+		});
+
+		for (const preset of COLUMN_COLOR_PRESETS) {
+			menu.addItem((item) => {
+				const title = window.document.createDocumentFragment();
+				const swatch = window.document.createElement('span');
+				swatch.style.display = 'inline-block';
+				swatch.style.width = '10px';
+				swatch.style.height = '10px';
+				swatch.style.borderRadius = '50%';
+				swatch.style.background = preset;
+				swatch.style.marginRight = '8px';
+				title.appendChild(swatch);
+				title.appendChild(window.document.createTextNode(preset));
+				item.setTitle(title).onClick(() => {
+					setColumnColor(columnId, preset);
+				});
+				if (current === preset) {
+					item.setChecked(true);
+				}
+			});
+		}
+
+		menu.addSeparator();
+		menu.addItem((item) => {
+			item.setTitle('Custom…').setIcon('palette').onClick(() => {
+				const input = window.document.createElement('input');
+				input.type = 'color';
+				input.value = current && /^#[0-9a-fA-F]{6}$/.test(current)
+					? current
+					: '#3498db';
+				input.style.position = 'fixed';
+				input.style.left = '-9999px';
+				window.document.body.appendChild(input);
+				input.addEventListener(
+					'change',
+					() => {
+						setColumnColor(columnId, input.value);
+						input.remove();
+					},
+					{ once: true },
+				);
+				input.addEventListener(
+					'cancel',
+					() => {
+						input.remove();
+					},
+					{ once: true },
+				);
+				input.click();
+			});
+		});
+
+		menu.showAtMouseEvent(event.nativeEvent);
 	};
 
 	const clearDrag = () => {
@@ -143,7 +259,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 			targetColumnId = String(overData.columnId);
 		} else {
 			const overId = String(over.id);
-			if (state.columns.some((column) => column.id === overId)) {
+			if (filteredColumns.some((column) => column.id === overId)) {
 				targetColumnId = overId;
 			} else {
 				const overCard = cardLookup.get(overId);
@@ -157,6 +273,8 @@ export function KanbanView({ view }: KanbanViewProps) {
 
 		void noteIndex.updateTriggerProperty(card.filePath, targetColumnId);
 	};
+
+	const hasActiveFilters = view.filters.some((rule) => rule.enabled);
 
 	return (
 		<div className="pk-kanban">
@@ -184,10 +302,27 @@ export function KanbanView({ view }: KanbanViewProps) {
 					>
 						Cards info
 					</button>
+					<button
+						type="button"
+						className={
+							panel === 'filter'
+								? 'pk-toolbar-button pk-toolbar-button-active'
+								: 'pk-toolbar-button'
+						}
+						aria-label="Filter"
+						title="Filter"
+						onClick={() => togglePanel('filter')}
+					>
+						Filter
+						{hasActiveFilters ? (
+							<span className="pk-toolbar-badge">{view.filters.filter((r) => r.enabled).length}</span>
+						) : null}
+					</button>
 				</div>
 			</div>
 
 			{panel === 'cardsInfo' && <CardsInfoPanel view={view} />}
+			{panel === 'filter' && <FilterPanel view={view} />}
 
 			{state.isLoading ? (
 				<div className="pk-board-loading">Loading board…</div>
@@ -196,32 +331,47 @@ export function KanbanView({ view }: KanbanViewProps) {
 					No notes with the trigger property in scope.
 				</div>
 			) : (
-				<DndContext
-					sensors={sensors}
-					collisionDetection={closestCorners}
-					onDragStart={onDragStart}
-					onDragCancel={clearDrag}
-					onDragEnd={onDragEnd}
-				>
-					<div
-						className={
-							dragPreview ? 'pk-board pk-board-dragging' : 'pk-board'
-						}
-					>
-						{state.columns.map((column) => (
-							<BoardColumn key={column.id} column={column} view={view} />
-						))}
-					</div>
-					{dragPreview && (
-						<CardDragPreview
-							card={dragPreview.card}
-							view={view}
-							offset={dragPreview.offset}
-							initialPosition={dragPreview.initialPosition}
-							width={dragPreview.width}
-						/>
+				<>
+					{filteredCardCount === 0 && hasActiveFilters && (
+						<div className="pk-board-empty">
+							No cards match the current filters.
+						</div>
 					)}
-				</DndContext>
+					<DndContext
+						sensors={sensors}
+						collisionDetection={closestCorners}
+						onDragStart={onDragStart}
+						onDragCancel={clearDrag}
+						onDragEnd={onDragEnd}
+					>
+						<div
+							className={
+								dragPreview ? 'pk-board pk-board-dragging' : 'pk-board'
+							}
+						>
+							{filteredColumns.map((column) => (
+								<BoardColumn
+									key={column.id}
+									column={column}
+									view={view}
+									color={document.settings.columnColors[column.id]}
+									onHeaderContextMenu={(event) =>
+										openColumnMenu(event, column.id)
+									}
+								/>
+							))}
+						</div>
+						{dragPreview && (
+							<CardDragPreview
+								card={dragPreview.card}
+								view={view}
+								offset={dragPreview.offset}
+								initialPosition={dragPreview.initialPosition}
+								width={dragPreview.width}
+							/>
+						)}
+					</DndContext>
+				</>
 			)}
 		</div>
 	);

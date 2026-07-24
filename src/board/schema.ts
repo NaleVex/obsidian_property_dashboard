@@ -11,6 +11,29 @@ export type LimitTo =
 export type BoardViewType = 'kanban';
 export type CardFieldType = 'property';
 
+export type FilterCombinator = 'and' | 'or' | 'not';
+export type FilterSource = 'property' | 'body';
+export type FilterTextOp =
+	| 'eq'
+	| 'neq'
+	| 'contains'
+	| 'not_contains'
+	| 'empty'
+	| 'not_empty';
+export type FilterNumericOp = 'eq' | 'neq' | 'lte' | 'lt' | 'gt' | 'gte';
+export type FilterOp = FilterTextOp | FilterNumericOp;
+
+export interface FilterRule {
+	id: string;
+	combinator: FilterCombinator;
+	source: FilterSource;
+	property: string;
+	numeric: boolean;
+	op: FilterOp;
+	value: string;
+	enabled: boolean;
+}
+
 export interface CardFieldDef {
 	id: string;
 	type: CardFieldType;
@@ -29,12 +52,14 @@ export interface BoardViewConfig {
 	name: string;
 	cardFields: CardFieldDef[];
 	cardInfo: CardInfoItem[];
+	filters: FilterRule[];
 }
 
 export interface BoardSettings {
 	triggerProperty: string;
 	limitTo: LimitTo;
 	values: string[];
+	columnColors: Record<string, string>;
 }
 
 export interface BoardDocument {
@@ -56,6 +81,19 @@ export function createDefaultCardInfo(): CardInfoItem[] {
 	return [{ id: CARD_INFO_NAME_ID, kind: 'name', enabled: true }];
 }
 
+export function createDefaultFilterRule(): FilterRule {
+	return {
+		id: createId(),
+		combinator: 'and',
+		source: 'property',
+		property: '',
+		numeric: false,
+		op: 'eq',
+		value: '',
+		enabled: true,
+	};
+}
+
 export function createDefaultKanbanView(name = 'Kanban'): BoardViewConfig {
 	return {
 		id: createId(),
@@ -63,6 +101,7 @@ export function createDefaultKanbanView(name = 'Kanban'): BoardViewConfig {
 		name,
 		cardFields: [],
 		cardInfo: createDefaultCardInfo(),
+		filters: [],
 	};
 }
 
@@ -75,10 +114,42 @@ export function createDefaultDocument(name = 'Untitled'): BoardDocument {
 			triggerProperty: 'status',
 			limitTo: { mode: 'all' },
 			values: ['todo', 'in-progress', 'done'],
+			columnColors: {},
 		},
 		views: [view],
 		activeViewId: view.id,
 	};
+}
+
+export function opNeedsValue(op: FilterOp): boolean {
+	return op !== 'empty' && op !== 'not_empty';
+}
+
+const TEXT_OPS: FilterTextOp[] = [
+	'eq',
+	'neq',
+	'contains',
+	'not_contains',
+	'empty',
+	'not_empty',
+];
+const NUMERIC_OPS: FilterNumericOp[] = ['eq', 'neq', 'lte', 'lt', 'gt', 'gte'];
+const COMBINATORS: FilterCombinator[] = ['and', 'or', 'not'];
+const SOURCES: FilterSource[] = ['property', 'body'];
+
+export function isTextOp(op: string): op is FilterTextOp {
+	return (TEXT_OPS as string[]).includes(op);
+}
+
+export function isNumericOp(op: string): op is FilterNumericOp {
+	return (NUMERIC_OPS as string[]).includes(op);
+}
+
+export function coerceFilterOp(op: FilterOp, numeric: boolean): FilterOp {
+	if (numeric) {
+		return isNumericOp(op) ? op : 'eq';
+	}
+	return isTextOp(op) ? op : 'eq';
 }
 
 export function createCardFieldDef(
@@ -256,6 +327,50 @@ function parseCardInfo(raw: unknown, cardFields: CardFieldDef[]): CardInfoItem[]
 	return normalizeCardInfo(items, cardFields);
 }
 
+function parseFilterRule(raw: unknown): FilterRule | null {
+	if (!isRecord(raw) || typeof raw.id !== 'string') {
+		return null;
+	}
+
+	const combinator = COMBINATORS.includes(raw.combinator as FilterCombinator)
+		? (raw.combinator as FilterCombinator)
+		: 'and';
+	const source = SOURCES.includes(raw.source as FilterSource)
+		? (raw.source as FilterSource)
+		: 'property';
+	const numeric = source === 'property' && Boolean(raw.numeric);
+	const rawOp = typeof raw.op === 'string' ? raw.op : 'eq';
+	const op = coerceFilterOp(
+		(isTextOp(rawOp) || isNumericOp(rawOp) ? rawOp : 'eq') as FilterOp,
+		numeric,
+	);
+
+	return {
+		id: raw.id,
+		combinator,
+		source,
+		property: typeof raw.property === 'string' ? raw.property : '',
+		numeric,
+		op,
+		value: typeof raw.value === 'string' ? raw.value : '',
+		enabled: raw.enabled !== false,
+	};
+}
+
+function parseFilters(raw: unknown): FilterRule[] {
+	if (!Array.isArray(raw)) {
+		return [];
+	}
+	const filters: FilterRule[] = [];
+	for (const item of raw) {
+		const rule = parseFilterRule(item);
+		if (rule) {
+			filters.push(rule);
+		}
+	}
+	return filters;
+}
+
 function parseViews(raw: unknown): BoardViewConfig[] {
 	if (!Array.isArray(raw)) {
 		return [];
@@ -279,9 +394,23 @@ function parseViews(raw: unknown): BoardViewConfig[] {
 			name: item.name.trim() || 'Kanban',
 			cardFields,
 			cardInfo: parseCardInfo(item.cardInfo, cardFields),
+			filters: parseFilters(item.filters),
 		});
 	}
 	return views;
+}
+
+function parseColumnColors(raw: unknown): Record<string, string> {
+	if (!isRecord(raw)) {
+		return {};
+	}
+	const colors: Record<string, string> = {};
+	for (const [key, value] of Object.entries(raw)) {
+		if (typeof value === 'string' && value.trim()) {
+			colors[key] = value.trim();
+		}
+	}
+	return colors;
 }
 
 function parseSettings(raw: unknown): BoardSettings {
@@ -306,6 +435,7 @@ function parseSettings(raw: unknown): BoardSettings {
 		triggerProperty,
 		limitTo: parseLimitTo(raw.limitTo),
 		values: values.length > 0 ? values : [...defaults.values],
+		columnColors: parseColumnColors(raw.columnColors),
 	};
 }
 

@@ -6,6 +6,7 @@ import {
 	UNKNOWN_COLUMN_LABEL,
 } from '../board/schema';
 import { fileMatchesLimitTo } from './limitTo';
+import { snapshotFrontmatter, stripFrontmatter } from './noteBody';
 import { stringifyPropertyValue } from './propertyValue';
 import { getTriggerFromFrontmatter } from './trigger';
 import {
@@ -33,11 +34,12 @@ export class NoteIndex {
 	private cardIndex = new Map<string, BoardCard>();
 	private pendingUpdates = new Set<string>();
 	private cleanups: Array<() => void> = [];
+	private rebuildGeneration = 0;
 	private debouncedRebuild: () => void;
 
 	constructor(private app: App) {
 		this.debouncedRebuild = debounce(() => {
-			this.rebuild();
+			void this.rebuild();
 		}, 200);
 	}
 
@@ -61,7 +63,7 @@ export class NoteIndex {
 		this.settings = settings;
 		this.boardFilePath = boardFilePath;
 		this.cardFields = cardFields;
-		this.rebuild();
+		void this.rebuild();
 	}
 
 	start(): void {
@@ -80,7 +82,7 @@ export class NoteIndex {
 				if (this.pendingUpdates.has(file.path)) {
 					return;
 				}
-				this.updateFile(file);
+				void this.updateFile(file);
 			}),
 		);
 
@@ -107,7 +109,7 @@ export class NoteIndex {
 				if (!(file instanceof TFile)) {
 					return;
 				}
-				this.updateFile(file);
+				void this.updateFile(file);
 			}),
 		);
 
@@ -118,7 +120,7 @@ export class NoteIndex {
 			}),
 		);
 
-		this.rebuild();
+		void this.rebuild();
 	}
 
 	stop(): void {
@@ -176,10 +178,15 @@ export class NoteIndex {
 		if (!card) {
 			return;
 		}
+		const frontmatter = { ...card.frontmatter };
+		if (this.settings) {
+			frontmatter[this.settings.triggerProperty] = rawValue;
+		}
 		this.cardIndex.set(filePath, {
 			...card,
 			columnId,
 			rawValue,
+			frontmatter,
 		});
 		this.setState(this.buildStateFromIndex(false));
 	}
@@ -195,27 +202,38 @@ export class NoteIndex {
 		this.emit();
 	}
 
-	private rebuild(): void {
+	private async rebuild(): Promise<void> {
+		const generation = ++this.rebuildGeneration;
+
 		if (!this.settings) {
 			this.cardIndex.clear();
 			this.setState(createEmptyState(false));
 			return;
 		}
 
-		this.cardIndex.clear();
+		this.setState(createEmptyState(true));
 		const files = this.app.vault.getMarkdownFiles();
+		const nextIndex = new Map<string, BoardCard>();
 
 		for (const file of files) {
-			const card = this.createCardFromFile(file);
+			const card = await this.createCardFromFile(file);
+			if (generation !== this.rebuildGeneration) {
+				return;
+			}
 			if (card) {
-				this.cardIndex.set(card.filePath, card);
+				nextIndex.set(card.filePath, card);
 			}
 		}
 
+		if (generation !== this.rebuildGeneration) {
+			return;
+		}
+
+		this.cardIndex = nextIndex;
 		this.setState(this.buildStateFromIndex(false));
 	}
 
-	private updateFile(file: TFile): void {
+	private async updateFile(file: TFile): Promise<void> {
 		if (!this.settings) {
 			return;
 		}
@@ -225,7 +243,7 @@ export class NoteIndex {
 			return;
 		}
 
-		const card = this.createCardFromFile(file);
+		const card = await this.createCardFromFile(file);
 		if (!card) {
 			this.removeCard(file.path);
 			return;
@@ -246,7 +264,7 @@ export class NoteIndex {
 	private renameCard(oldPath: string, file: TFile): void {
 		this.cardIndex.delete(oldPath);
 		this.pendingUpdates.delete(oldPath);
-		this.updateFile(file);
+		void this.updateFile(file);
 	}
 
 	private readCardFields(
@@ -270,7 +288,7 @@ export class NoteIndex {
 		return fields;
 	}
 
-	private createCardFromFile(file: TFile): BoardCard | null {
+	private async createCardFromFile(file: TFile): Promise<BoardCard | null> {
 		if (!this.settings) {
 			return null;
 		}
@@ -295,6 +313,14 @@ export class NoteIndex {
 			return null;
 		}
 
+		let body = '';
+		try {
+			const content = await this.app.vault.cachedRead(file);
+			body = stripFrontmatter(content);
+		} catch {
+			body = '';
+		}
+
 		return {
 			id: file.path,
 			filePath: file.path,
@@ -302,6 +328,8 @@ export class NoteIndex {
 			columnId: trigger.columnId,
 			rawValue: trigger.rawValue,
 			fields: this.readCardFields(frontmatter),
+			frontmatter: snapshotFrontmatter(frontmatter),
+			body,
 		};
 	}
 

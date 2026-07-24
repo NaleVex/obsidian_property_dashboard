@@ -1,4 +1,5 @@
 import { useDroppable } from '@dnd-kit/core';
+import { CSSProperties, MouseEvent } from 'react';
 import { BoardViewConfig } from '../board/schema';
 import { BoardColumn as BoardColumnType } from '../data/types';
 import { BoardCard } from './BoardCard';
@@ -6,9 +7,16 @@ import { BoardCard } from './BoardCard';
 interface BoardColumnProps {
 	column: BoardColumnType;
 	view: BoardViewConfig;
+	color?: string;
+	onHeaderContextMenu?: (event: MouseEvent<HTMLElement>) => void;
 }
 
-export function BoardColumn({ column, view }: BoardColumnProps) {
+export function BoardColumn({
+	column,
+	view,
+	color,
+	onHeaderContextMenu,
+}: BoardColumnProps) {
 	const { setNodeRef, isOver } = useDroppable({
 		id: column.id,
 		data: {
@@ -17,12 +25,30 @@ export function BoardColumn({ column, view }: BoardColumnProps) {
 		},
 	});
 
+	const style: CSSProperties | undefined = color
+		? ({
+				'--pk-column-accent': color,
+			} as CSSProperties)
+		: undefined;
+
 	return (
 		<section
 			ref={setNodeRef}
-			className={isOver ? 'pk-column pk-column-over' : 'pk-column'}
+			className={
+				[
+					'pk-column',
+					isOver ? 'pk-column-over' : '',
+					color ? 'pk-column-colored' : '',
+				]
+					.filter(Boolean)
+					.join(' ')
+			}
+			style={style}
 		>
-			<header className="pk-column-header">
+			<header
+				className="pk-column-header"
+				onContextMenu={onHeaderContextMenu}
+			>
 				<span className="pk-column-title">{column.title}</span>
 				<span className="pk-column-count">{column.cards.length}</span>
 			</header>
