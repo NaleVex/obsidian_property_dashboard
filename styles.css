@@ -485,6 +485,47 @@
 	flex-shrink: 0;
 }
 
+.pk-card-color-effects {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+}
+
+.pk-card-color-swatch {
+	appearance: none;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	cursor: pointer;
+	box-sizing: border-box;
+	flex-shrink: 0;
+}
+
+.pk-card-color-swatch.is-none {
+	background:
+		linear-gradient(
+			to top right,
+			transparent calc(50% - 0.5px),
+			var(--text-muted) calc(50% - 0.5px),
+			var(--text-muted) calc(50% + 0.5px),
+			transparent calc(50% + 0.5px)
+		),
+		var(--background-primary);
+}
+
+.pk-card-color-swatch.is-reset {
+	background:
+		repeating-conic-gradient(
+			var(--background-modifier-border) 0% 25%,
+			var(--background-primary) 0% 50%
+		)
+		50% / 8px 8px;
+}
+
 .pk-board-loading,
 .pk-board-empty {
 	color: var(--text-muted);
@@ -575,6 +616,30 @@
 .pk-card:hover {
 	border-color: var(--background-modifier-border-hover);
 	background: var(--background-modifier-hover);
+}
+
+.pk-card-colored-border {
+	border-color: var(--pk-card-border);
+}
+
+.pk-card-colored-bg {
+	background: var(--pk-card-bg);
+}
+
+.pk-card-colored-border:hover {
+	border-color: var(--pk-card-border);
+}
+
+.pk-card-colored-bg:hover {
+	background: color-mix(in srgb, var(--pk-card-bg) 88%, var(--text-normal));
+}
+
+.pk-card-preview.pk-card-colored-bg {
+	background: var(--pk-card-bg);
+}
+
+.pk-card-preview.pk-card-colored-border {
+	border-color: var(--pk-card-border);
 }
 
 .pk-board-dragging .pk-column-cards {

@@ -34,6 +34,27 @@ export interface FilterRule {
 	enabled: boolean;
 }
 
+/** Shared match fields used by filters and card color rules. */
+export interface RuleCondition {
+	source: FilterSource;
+	property: string;
+	numeric: boolean;
+	op: FilterOp;
+	value: string;
+}
+
+export type CardColorEffect =
+	| { kind: 'color'; hex: string }
+	| { kind: 'reset' }
+	| { kind: 'none' };
+
+export interface CardColorRule extends RuleCondition {
+	id: string;
+	enabled: boolean;
+	border: CardColorEffect;
+	background: CardColorEffect;
+}
+
 export interface CardFieldDef {
 	id: string;
 	type: CardFieldType;
@@ -56,6 +77,7 @@ export interface BoardViewConfig {
 	cardFields: CardFieldDef[];
 	cardInfo: CardInfoItem[];
 	filters: FilterRule[];
+	cardColors: CardColorRule[];
 }
 
 export interface BoardSettings {
@@ -101,6 +123,20 @@ export function createDefaultFilterRule(): FilterRule {
 	};
 }
 
+export function createDefaultCardColorRule(): CardColorRule {
+	return {
+		id: createId(),
+		source: 'property',
+		property: '',
+		numeric: false,
+		op: 'eq',
+		value: '',
+		enabled: true,
+		border: { kind: 'none' },
+		background: { kind: 'none' },
+	};
+}
+
 export const DEFAULT_TRIGGER_PROPERTY = 'status';
 export const DEFAULT_VALUES = ['todo', 'in-progress', 'done'];
 
@@ -115,6 +151,7 @@ export function createDefaultKanbanView(name = 'Kanban'): BoardViewConfig {
 		cardFields: [],
 		cardInfo: createDefaultCardInfo(),
 		filters: [],
+		cardColors: [],
 	};
 }
 
@@ -389,6 +426,63 @@ function parseFilters(raw: unknown): FilterRule[] {
 	return filters;
 }
 
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+
+function parseCardColorEffect(raw: unknown): CardColorEffect {
+	if (!isRecord(raw) || typeof raw.kind !== 'string') {
+		return { kind: 'none' };
+	}
+	if (raw.kind === 'reset') {
+		return { kind: 'reset' };
+	}
+	if (raw.kind === 'color' && typeof raw.hex === 'string' && HEX_COLOR_RE.test(raw.hex)) {
+		return { kind: 'color', hex: raw.hex };
+	}
+	return { kind: 'none' };
+}
+
+function parseCardColorRule(raw: unknown): CardColorRule | null {
+	if (!isRecord(raw) || typeof raw.id !== 'string') {
+		return null;
+	}
+
+	const source = SOURCES.includes(raw.source as FilterSource)
+		? (raw.source as FilterSource)
+		: 'property';
+	const numeric = source === 'property' && Boolean(raw.numeric);
+	const rawOp = typeof raw.op === 'string' ? raw.op : 'eq';
+	const op = coerceFilterOp(
+		(isTextOp(rawOp) || isNumericOp(rawOp) ? rawOp : 'eq') as FilterOp,
+		numeric,
+	);
+
+	return {
+		id: raw.id,
+		source,
+		property: typeof raw.property === 'string' ? raw.property : '',
+		numeric,
+		op,
+		value: typeof raw.value === 'string' ? raw.value : '',
+		enabled: raw.enabled !== false,
+		border: parseCardColorEffect(raw.border),
+		background: parseCardColorEffect(raw.background),
+	};
+}
+
+function parseCardColors(raw: unknown): CardColorRule[] {
+	if (!Array.isArray(raw)) {
+		return [];
+	}
+	const rules: CardColorRule[] = [];
+	for (const item of raw) {
+		const rule = parseCardColorRule(item);
+		if (rule) {
+			rules.push(rule);
+		}
+	}
+	return rules;
+}
+
 function parseValues(raw: unknown, fallback: string[]): string[] {
 	if (!Array.isArray(raw)) {
 		return [...fallback];
@@ -475,6 +569,7 @@ function parseViews(
 			cardFields,
 			cardInfo: parseCardInfo(item.cardInfo, cardFields),
 			filters: parseFilters(item.filters),
+			cardColors: parseCardColors(item.cardColors),
 		});
 	}
 	return views;

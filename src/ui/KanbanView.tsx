@@ -15,7 +15,9 @@ import { BoardCard as BoardCardType } from '../data/types';
 import { useBoardApp } from './BoardAppContext';
 import { BoardColumn } from './BoardColumn';
 import { CardDragPreview } from './CardDragPreview';
+import { CardColorsPanel } from './CardColorsPanel';
 import { CardsInfoPanel } from './CardsInfoPanel';
+import { COLOR_PRESETS, HEX_COLOR_RE, pickCustomColor } from './colorPresets';
 import { FilterPanel } from './FilterPanel';
 import { ViewSettingsModal } from './ViewSettingsModal';
 import { useNoteIndex } from './hooks/useNoteIndex';
@@ -27,16 +29,7 @@ interface DragPreviewState {
 	width: number;
 }
 
-const COLUMN_COLOR_PRESETS: Array<{ hex: string; name: string }> = [
-	{ hex: '#e74c3c', name: 'Red' },
-	{ hex: '#e67e22', name: 'Orange' },
-	{ hex: '#f1c40f', name: 'Yellow' },
-	{ hex: '#2ecc71', name: 'Green' },
-	{ hex: '#1abc9c', name: 'Teal' },
-	{ hex: '#3498db', name: 'Blue' },
-	{ hex: '#9b59b6', name: 'Purple' },
-	{ hex: '#95a5a6', name: 'Gray' },
-];
+type KanbanPanel = 'cardsInfo' | 'filter' | 'cardColors';
 
 function ToolbarIcon({ name }: { name: string }) {
 	const ref = useRef<HTMLSpanElement>(null);
@@ -55,7 +48,7 @@ interface KanbanViewProps {
 export function KanbanView({ view }: KanbanViewProps) {
 	const { app, document, updateDocument, noteIndex } = useBoardApp();
 	const state = useNoteIndex(noteIndex);
-	const [panel, setPanel] = useState<'cardsInfo' | 'filter' | null>(null);
+	const [panel, setPanel] = useState<KanbanPanel | null>(null);
 	const [dragPreview, setDragPreview] = useState<DragPreviewState | null>(null);
 
 	const documentRef = useRef(document);
@@ -87,7 +80,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 		return map;
 	}, [filteredColumns]);
 
-	const togglePanel = (id: 'cardsInfo' | 'filter') => {
+	const togglePanel = (id: KanbanPanel) => {
 		setPanel((current) => (current === id ? null : id));
 	};
 
@@ -142,7 +135,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 			}
 		});
 
-		for (const preset of COLUMN_COLOR_PRESETS) {
+		for (const preset of COLOR_PRESETS) {
 			menu.addItem((item) => {
 				const title = window.document.createDocumentFragment();
 				const swatch = window.document.createElement('span');
@@ -162,30 +155,10 @@ export function KanbanView({ view }: KanbanViewProps) {
 		menu.addSeparator();
 		menu.addItem((item) => {
 			item.setTitle('Custom…').setIcon('palette').onClick(() => {
-				const input = window.document.createElement('input');
-				input.type = 'color';
-				input.value = current && /^#[0-9a-fA-F]{6}$/.test(current)
-					? current
-					: '#3498db';
-				input.style.position = 'fixed';
-				input.style.left = '-9999px';
-				window.document.body.appendChild(input);
-				input.addEventListener(
-					'change',
-					() => {
-						setColumnColor(columnId, input.value);
-						input.remove();
-					},
-					{ once: true },
+				pickCustomColor(
+					current && HEX_COLOR_RE.test(current) ? current : undefined,
+					(hex) => setColumnColor(columnId, hex),
 				);
-				input.addEventListener(
-					'cancel',
-					() => {
-						input.remove();
-					},
-					{ once: true },
-				);
-				input.click();
 			});
 		});
 
@@ -271,6 +244,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 	};
 
 	const hasActiveFilters = view.filters.some((rule) => rule.enabled);
+	const hasActiveCardColors = view.cardColors.some((rule) => rule.enabled);
 
 	return (
 		<div className="pk-kanban">
@@ -314,11 +288,30 @@ export function KanbanView({ view }: KanbanViewProps) {
 							<span className="pk-toolbar-badge">{view.filters.filter((r) => r.enabled).length}</span>
 						) : null}
 					</button>
+					<button
+						type="button"
+						className={
+							panel === 'cardColors'
+								? 'pk-toolbar-button pk-toolbar-button-active'
+								: 'pk-toolbar-button'
+						}
+						aria-label="Colors"
+						title="Colors"
+						onClick={() => togglePanel('cardColors')}
+					>
+						Colors
+						{hasActiveCardColors ? (
+							<span className="pk-toolbar-badge">
+								{view.cardColors.filter((r) => r.enabled).length}
+							</span>
+						) : null}
+					</button>
 				</div>
 			</div>
 
 			{panel === 'cardsInfo' && <CardsInfoPanel view={view} />}
 			{panel === 'filter' && <FilterPanel view={view} />}
+			{panel === 'cardColors' && <CardColorsPanel view={view} />}
 
 			{state.isLoading ? (
 				<div className="pk-board-loading">Loading board…</div>

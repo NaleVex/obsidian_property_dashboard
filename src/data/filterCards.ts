@@ -1,10 +1,22 @@
-import { FilterOp, FilterRule, FilterCombinator } from '../board/schema';
+import {
+	CardColorEffect,
+	CardColorRule,
+	FilterOp,
+	FilterRule,
+	FilterCombinator,
+	RuleCondition,
+} from '../board/schema';
 import { stringifyPropertyValue } from './propertyValue';
 import { BoardCard, BoardColumn } from './types';
 
 interface FilterGroup {
 	combinator: FilterCombinator;
 	members: FilterRule[];
+}
+
+export interface ResolvedCardColors {
+	border?: string;
+	background?: string;
 }
 
 function parseFiniteNumber(raw: string): number | null {
@@ -85,7 +97,7 @@ function matchNumericOp(
 	}
 }
 
-export function matchesFilterRule(rule: FilterRule, card: BoardCard): boolean {
+export function matchesFilterRule(rule: RuleCondition, card: BoardCard): boolean {
 	if (rule.source === 'body') {
 		return matchTextOp(card.body, rule.op, rule.value);
 	}
@@ -95,6 +107,45 @@ export function matchesFilterRule(rule: FilterRule, card: BoardCard): boolean {
 		return matchNumericOp(text, rule.op, rule.value);
 	}
 	return matchTextOp(text, rule.op, rule.value);
+}
+
+function applyColorEffect(
+	current: string | undefined,
+	effect: CardColorEffect,
+): string | undefined {
+	if (effect.kind === 'none') {
+		return current;
+	}
+	if (effect.kind === 'reset') {
+		return undefined;
+	}
+	return effect.hex;
+}
+
+/**
+ * Apply enabled matching color rules from bottom to top.
+ * Higher rules overwrite lower ones; `none` leaves the prior value.
+ */
+export function resolveCardColors(
+	rules: CardColorRule[],
+	card: BoardCard,
+): ResolvedCardColors | null {
+	let border: string | undefined;
+	let background: string | undefined;
+
+	for (let i = rules.length - 1; i >= 0; i -= 1) {
+		const rule = rules[i];
+		if (!rule || !rule.enabled || !matchesFilterRule(rule, card)) {
+			continue;
+		}
+		border = applyColorEffect(border, rule.border);
+		background = applyColorEffect(background, rule.background);
+	}
+
+	if (border === undefined && background === undefined) {
+		return null;
+	}
+	return { border, background };
 }
 
 /** Group enabled rules: trailing `and` rules join the current group. */
