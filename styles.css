@@ -463,10 +463,6 @@
 	padding: 0;
 }
 
-.pk-filter-numeric {
-	flex: 0 0 auto;
-}
-
 .pk-filter-op {
 	width: 120px;
 	flex: 0 0 120px;

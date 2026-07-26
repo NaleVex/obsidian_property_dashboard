@@ -21,11 +21,17 @@ import {
 	FilterOp,
 	FilterRule,
 	FilterSource,
-	coerceFilterOp,
 	createDefaultFilterRule,
 	createId,
 	opNeedsValue,
 } from '../board/schema';
+import {
+	coerceOpForType,
+	getPropertyType,
+	normalizeDatetimeInputValue,
+	opOptionsForType,
+	valueInputTypeForPropertyType,
+} from '../data/propertyType';
 import { useBoardApp } from './BoardAppContext';
 
 interface FilterPanelProps {
@@ -52,24 +58,6 @@ function ActionIcon({ name }: { name: string }) {
 	return <span ref={ref} className="pk-icon" aria-hidden="true" />;
 }
 
-const TEXT_OP_OPTIONS: Array<{ value: FilterOp; label: string }> = [
-	{ value: 'eq', label: 'is equal' },
-	{ value: 'neq', label: 'is not' },
-	{ value: 'contains', label: 'contains' },
-	{ value: 'not_contains', label: 'not contains' },
-	{ value: 'empty', label: 'is empty' },
-	{ value: 'not_empty', label: 'not empty' },
-];
-
-const NUMERIC_OP_OPTIONS: Array<{ value: FilterOp; label: string }> = [
-	{ value: 'eq', label: '==' },
-	{ value: 'neq', label: '!=' },
-	{ value: 'lte', label: '<=' },
-	{ value: 'lt', label: '<' },
-	{ value: 'gt', label: '>' },
-	{ value: 'gte', label: '>=' },
-];
-
 interface PropertyOption {
 	property: string;
 	label: string;
@@ -88,6 +76,7 @@ function SortableFilterRow({
 	onCopy: () => void;
 	onDelete: () => void;
 }) {
+	const { app } = useBoardApp();
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
 		useSortable({ id: rule.id });
 
@@ -97,9 +86,18 @@ function SortableFilterRow({
 		opacity: isDragging ? 0.6 : 1,
 	};
 
-	const numeric = rule.source === 'property' && rule.numeric;
-	const opOptions = numeric ? NUMERIC_OP_OPTIONS : TEXT_OP_OPTIONS;
-	const showValue = opNeedsValue(rule.op);
+	const propertyType =
+		rule.source === 'property'
+			? getPropertyType(app, rule.property)
+			: 'text';
+	const opOptions = opOptionsForType(propertyType);
+	const coercedOp = coerceOpForType(rule.op, propertyType);
+	const showValue = opNeedsValue(coercedOp);
+	const valueInputType = valueInputTypeForPropertyType(propertyType);
+	const valueForInput =
+		propertyType === 'datetime'
+			? normalizeDatetimeInputValue(rule.value)
+			: rule.value;
 
 	const openPropertyMenu = (event: MouseEvent<HTMLButtonElement>) => {
 		event.preventDefault();
@@ -116,7 +114,12 @@ function SortableFilterRow({
 							? option.property
 							: `${option.label} (${option.property})`;
 					item.setTitle(title).onClick(() => {
-						onChange({ ...rule, property: option.property });
+						const nextType = getPropertyType(app, option.property);
+						onChange({
+							...rule,
+							property: option.property,
+							op: coerceOpForType(rule.op, nextType),
+						});
 					});
 					if (rule.property === option.property) {
 						item.setChecked(true);
@@ -161,12 +164,14 @@ function SortableFilterRow({
 				value={rule.source}
 				onChange={(event) => {
 					const source = event.target.value as FilterSource;
-					const nextNumeric = source === 'property' ? rule.numeric : false;
+					const nextType =
+						source === 'property'
+							? getPropertyType(app, rule.property)
+							: 'text';
 					onChange({
 						...rule,
 						source,
-						numeric: nextNumeric,
-						op: coerceFilterOp(rule.op, nextNumeric),
+						op: coerceOpForType(rule.op, nextType),
 					});
 				}}
 			>
@@ -175,50 +180,40 @@ function SortableFilterRow({
 			</select>
 
 			{rule.source === 'property' && (
-				<>
-					<div className="pk-filter-property-wrap">
-						<input
-							className="pk-input pk-filter-property"
-							type="text"
-							placeholder="Property name"
-							aria-label="Property name"
-							value={rule.property}
-							onChange={(event) =>
-								onChange({ ...rule, property: event.target.value })
-							}
-						/>
-						<button
-							type="button"
-							className="pk-icon-button pk-filter-property-pick"
-							aria-label="Pick from card fields"
-							title="Pick from card fields"
-							onClick={openPropertyMenu}
-						>
-							<ActionIcon name="chevron-down" />
-						</button>
-					</div>
-					<label className="pk-toggle pk-filter-numeric">
-						<input
-							type="checkbox"
-							checked={rule.numeric}
-							onChange={(event) => {
-								const nextNumeric = event.target.checked;
-								onChange({
-									...rule,
-									numeric: nextNumeric,
-									op: coerceFilterOp(rule.op, nextNumeric),
-								});
-							}}
-						/>
-						numeric
-					</label>
-				</>
+				<div className="pk-filter-property-wrap">
+					<input
+						className="pk-input pk-filter-property"
+						type="text"
+						placeholder="Property name"
+						aria-label="Property name"
+						value={rule.property}
+						onChange={(event) => {
+							const property = event.target.value;
+							const nextType = getPropertyType(app, property);
+							onChange({
+								...rule,
+								property,
+								op: coerceOpForType(rule.op, nextType),
+							});
+						}}
+					/>
+					<button
+						type="button"
+						className="pk-icon-button pk-filter-property-pick"
+						aria-label="Pick from card fields"
+						title="Pick from card fields"
+						onClick={openPropertyMenu}
+					>
+						<ActionIcon name="chevron-down" />
+					</button>
+				</div>
 			)}
 
 			<select
+				key={propertyType}
 				className="pk-select pk-filter-op"
 				aria-label="Operator"
-				value={rule.op}
+				value={coercedOp}
 				onChange={(event) =>
 					onChange({ ...rule, op: event.target.value as FilterOp })
 				}
@@ -230,14 +225,20 @@ function SortableFilterRow({
 				))}
 			</select>
 
-			{showValue && (
+			{showValue && valueInputType && (
 				<input
 					className="pk-input pk-filter-value"
-					type="text"
+					type={valueInputType}
 					placeholder="Value"
 					aria-label="Comparison value"
-					value={rule.value}
-					onChange={(event) => onChange({ ...rule, value: event.target.value })}
+					value={valueForInput}
+					onChange={(event) => {
+						const next =
+							propertyType === 'datetime'
+								? normalizeDatetimeInputValue(event.target.value)
+								: event.target.value;
+						onChange({ ...rule, value: next });
+					}}
 				/>
 			)}
 

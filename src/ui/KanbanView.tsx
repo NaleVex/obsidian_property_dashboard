@@ -11,6 +11,7 @@ import { Menu, setIcon } from 'obsidian';
 import { MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { BoardViewConfig } from '../board/schema';
 import { countCards, filterColumns } from '../data/filterCards';
+import { sortColumns } from '../data/sortCards';
 import { BoardCard as BoardCardType } from '../data/types';
 import { useBoardApp } from './BoardAppContext';
 import { BoardColumn } from './BoardColumn';
@@ -19,6 +20,7 @@ import { CardColorsPanel } from './CardColorsPanel';
 import { CardsInfoPanel } from './CardsInfoPanel';
 import { COLOR_PRESETS, HEX_COLOR_RE, pickCustomColor } from './colorPresets';
 import { FilterPanel } from './FilterPanel';
+import { SortPanel } from './SortPanel';
 import { ViewSettingsModal } from './ViewSettingsModal';
 import { useNoteIndex } from './hooks/useNoteIndex';
 
@@ -29,7 +31,7 @@ interface DragPreviewState {
 	width: number;
 }
 
-type KanbanPanel = 'cardsInfo' | 'filter' | 'cardColors';
+type KanbanPanel = 'cardsInfo' | 'filter' | 'sort' | 'cardColors';
 
 function ToolbarIcon({ name }: { name: string }) {
 	const ref = useRef<HTMLSpanElement>(null);
@@ -61,24 +63,29 @@ export function KanbanView({ view }: KanbanViewProps) {
 	);
 
 	const filteredColumns = useMemo(
-		() => filterColumns(state.columns, view.filters),
-		[state.columns, view.filters],
+		() => filterColumns(state.columns, view.filters, app),
+		[state.columns, view.filters, app],
+	);
+
+	const displayColumns = useMemo(
+		() => sortColumns(filteredColumns, view.sorts, app),
+		[filteredColumns, view.sorts, app],
 	);
 
 	const filteredCardCount = useMemo(
-		() => countCards(filteredColumns),
-		[filteredColumns],
+		() => countCards(displayColumns),
+		[displayColumns],
 	);
 
 	const cardLookup = useMemo(() => {
 		const map = new Map<string, BoardCardType>();
-		for (const column of filteredColumns) {
+		for (const column of displayColumns) {
 			for (const card of column.cards) {
 				map.set(card.id, card);
 			}
 		}
 		return map;
-	}, [filteredColumns]);
+	}, [displayColumns]);
 
 	const togglePanel = (id: KanbanPanel) => {
 		setPanel((current) => (current === id ? null : id));
@@ -228,12 +235,12 @@ export function KanbanView({ view }: KanbanViewProps) {
 			targetColumnId = String(overData.columnId);
 		} else {
 			const overId = String(over.id);
-			if (filteredColumns.some((column) => column.id === overId)) {
-				targetColumnId = overId;
-			} else {
-				const overCard = cardLookup.get(overId);
-				targetColumnId = overCard?.columnId ?? null;
-			}
+		if (displayColumns.some((column) => column.id === overId)) {
+			targetColumnId = overId;
+		} else {
+			const overCard = cardLookup.get(overId);
+			targetColumnId = overCard?.columnId ?? null;
+		}
 		}
 
 		if (!targetColumnId || targetColumnId === card.columnId) {
@@ -244,6 +251,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 	};
 
 	const hasActiveFilters = view.filters.some((rule) => rule.enabled);
+	const hasActiveSorts = view.sorts.some((rule) => rule.enabled);
 	const hasActiveCardColors = view.cardColors.some((rule) => rule.enabled);
 
 	return (
@@ -291,6 +299,24 @@ export function KanbanView({ view }: KanbanViewProps) {
 					<button
 						type="button"
 						className={
+							panel === 'sort'
+								? 'pk-toolbar-button pk-toolbar-button-active'
+								: 'pk-toolbar-button'
+						}
+						aria-label="Sort"
+						title="Sort"
+						onClick={() => togglePanel('sort')}
+					>
+						Sort
+						{hasActiveSorts ? (
+							<span className="pk-toolbar-badge">
+								{view.sorts.filter((r) => r.enabled).length}
+							</span>
+						) : null}
+					</button>
+					<button
+						type="button"
+						className={
 							panel === 'cardColors'
 								? 'pk-toolbar-button pk-toolbar-button-active'
 								: 'pk-toolbar-button'
@@ -311,6 +337,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 
 			{panel === 'cardsInfo' && <CardsInfoPanel view={view} />}
 			{panel === 'filter' && <FilterPanel view={view} />}
+			{panel === 'sort' && <SortPanel view={view} />}
 			{panel === 'cardColors' && <CardColorsPanel view={view} />}
 
 			{state.isLoading ? (
@@ -338,7 +365,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 								dragPreview ? 'pk-board pk-board-dragging' : 'pk-board'
 							}
 						>
-							{filteredColumns.map((column) => (
+							{displayColumns.map((column) => (
 								<BoardColumn
 									key={column.id}
 									column={column}

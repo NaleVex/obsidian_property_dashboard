@@ -1,3 +1,4 @@
+import { App } from 'obsidian';
 import {
 	CardColorEffect,
 	CardColorRule,
@@ -6,6 +7,7 @@ import {
 	FilterCombinator,
 	RuleCondition,
 } from '../board/schema';
+import { getPropertyType, coerceOpForType, type PropertyValueType } from './propertyType';
 import { stringifyPropertyValue } from './propertyValue';
 import { BoardCard, BoardColumn } from './types';
 
@@ -42,6 +44,20 @@ function propertyText(
 	return stringifyPropertyValue(frontmatter[key]) ?? '';
 }
 
+function propertyRaw(
+	frontmatter: Record<string, unknown>,
+	property: string,
+): unknown {
+	const key = property.trim();
+	if (
+		!key ||
+		!Object.prototype.hasOwnProperty.call(frontmatter, key)
+	) {
+		return undefined;
+	}
+	return frontmatter[key];
+}
+
 function matchTextOp(haystack: string, op: FilterOp, value: string): boolean {
 	switch (op) {
 		case 'eq':
@@ -61,24 +77,11 @@ function matchTextOp(haystack: string, op: FilterOp, value: string): boolean {
 	}
 }
 
-function matchNumericOp(
-	leftRaw: string,
+function compareOrdered(
+	left: number,
+	right: number,
 	op: FilterOp,
-	rightRaw: string,
 ): boolean {
-	if (op === 'empty') {
-		return leftRaw.trim().length === 0;
-	}
-	if (op === 'not_empty') {
-		return leftRaw.trim().length > 0;
-	}
-
-	const left = parseFiniteNumber(leftRaw);
-	const right = parseFiniteNumber(rightRaw);
-	if (left === null || right === null) {
-		return false;
-	}
-
 	switch (op) {
 		case 'eq':
 			return left === right;
@@ -97,16 +100,101 @@ function matchNumericOp(
 	}
 }
 
-export function matchesFilterRule(rule: RuleCondition, card: BoardCard): boolean {
+function matchNumericOp(
+	leftRaw: string,
+	op: FilterOp,
+	rightRaw: string,
+): boolean {
+	const left = parseFiniteNumber(leftRaw);
+	const right = parseFiniteNumber(rightRaw);
+	if (left === null || right === null) {
+		return false;
+	}
+	return compareOrdered(left, right, op);
+}
+
+function parseTimestamp(raw: string): number | null {
+	const trimmed = raw.trim();
+	if (!trimmed) {
+		return null;
+	}
+	// Date-only: compare as UTC midnight for stable ordering
+	if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+		const ms = Date.parse(`${trimmed}T00:00:00`);
+		return Number.isFinite(ms) ? ms : null;
+	}
+	// datetime-local style without seconds/timezone
+	if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(trimmed)) {
+		const ms = Date.parse(trimmed);
+		return Number.isFinite(ms) ? ms : null;
+	}
+	const ms = Date.parse(trimmed);
+	return Number.isFinite(ms) ? ms : null;
+}
+
+function matchDateOp(
+	leftRaw: string,
+	op: FilterOp,
+	rightRaw: string,
+): boolean {
+	const left = parseTimestamp(leftRaw);
+	const right = parseTimestamp(rightRaw);
+	if (left === null || right === null) {
+		return false;
+	}
+	return compareOrdered(left, right, op);
+}
+
+function isCheckboxTrue(raw: unknown): boolean {
+	if (raw === true || raw === 1) {
+		return true;
+	}
+	if (typeof raw === 'string') {
+		const trimmed = raw.trim().toLowerCase();
+		return trimmed === 'true' || trimmed === '1';
+	}
+	return false;
+}
+
+function matchCheckboxOp(raw: unknown, op: FilterOp): boolean {
+	const isTrue = isCheckboxTrue(raw);
+	if (op === 'is_true') {
+		return isTrue;
+	}
+	if (op === 'is_false') {
+		return !isTrue;
+	}
+	return false;
+}
+
+export function matchesFilterRule(
+	rule: RuleCondition,
+	card: BoardCard,
+	app: App,
+): boolean {
 	if (rule.source === 'body') {
-		return matchTextOp(card.body, rule.op, rule.value);
+		const op = coerceOpForType(rule.op, 'text');
+		return matchTextOp(card.body, op, rule.value);
+	}
+
+	const type: PropertyValueType = getPropertyType(app, rule.property);
+	const op = coerceOpForType(rule.op, type);
+
+	if (type === 'checkbox') {
+		return matchCheckboxOp(propertyRaw(card.frontmatter, rule.property), op);
 	}
 
 	const text = propertyText(card.frontmatter, rule.property);
-	if (rule.numeric) {
-		return matchNumericOp(text, rule.op, rule.value);
+
+	if (type === 'number') {
+		return matchNumericOp(text, op, rule.value);
 	}
-	return matchTextOp(text, rule.op, rule.value);
+
+	if (type === 'date' || type === 'datetime') {
+		return matchDateOp(text, op, rule.value);
+	}
+
+	return matchTextOp(text, op, rule.value);
 }
 
 function applyColorEffect(
@@ -129,13 +217,14 @@ function applyColorEffect(
 export function resolveCardColors(
 	rules: CardColorRule[],
 	card: BoardCard,
+	app: App,
 ): ResolvedCardColors | null {
 	let border: string | undefined;
 	let background: string | undefined;
 
 	for (let i = rules.length - 1; i >= 0; i -= 1) {
 		const rule = rules[i];
-		if (!rule || !rule.enabled || !matchesFilterRule(rule, card)) {
+		if (!rule || !rule.enabled || !matchesFilterRule(rule, card, app)) {
 			continue;
 		}
 		border = applyColorEffect(border, rule.border);
@@ -174,7 +263,11 @@ export function groupFilterRules(rules: FilterRule[]): FilterGroup[] {
 	return groups;
 }
 
-export function matchesFilterRules(rules: FilterRule[], card: BoardCard): boolean {
+export function matchesFilterRules(
+	rules: FilterRule[],
+	card: BoardCard,
+	app: App,
+): boolean {
 	const groups = groupFilterRules(rules);
 	if (groups.length === 0) {
 		return true;
@@ -183,7 +276,9 @@ export function matchesFilterRules(rules: FilterRule[], card: BoardCard): boolea
 	let result: boolean | null = null;
 
 	for (const group of groups) {
-		let memberResult = group.members.every((rule) => matchesFilterRule(rule, card));
+		let memberResult = group.members.every((rule) =>
+			matchesFilterRule(rule, card, app),
+		);
 		if (group.combinator === 'not') {
 			memberResult = !memberResult;
 		}
@@ -206,6 +301,7 @@ export function matchesFilterRules(rules: FilterRule[], card: BoardCard): boolea
 export function filterColumns(
 	columns: BoardColumn[],
 	rules: FilterRule[],
+	app: App,
 ): BoardColumn[] {
 	if (groupFilterRules(rules).length === 0) {
 		return columns;
@@ -213,7 +309,7 @@ export function filterColumns(
 
 	return columns.map((column) => ({
 		...column,
-		cards: column.cards.filter((card) => matchesFilterRules(rules, card)),
+		cards: column.cards.filter((card) => matchesFilterRules(rules, card, app)),
 	}));
 }
 

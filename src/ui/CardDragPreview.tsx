@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { BoardViewConfig } from '../board/schema';
 import { resolveCardColors } from '../data/filterCards';
 import { BoardCard as BoardCardType } from '../data/types';
+import { useBoardApp } from './BoardAppContext';
 import { CardBody, cardColorClassName, cardColorStyle } from './BoardCard';
 
 interface CardDragPreviewProps {
@@ -22,6 +23,7 @@ export function CardDragPreview({
 	initialPosition,
 	width,
 }: CardDragPreviewProps) {
+	const { app } = useBoardApp();
 	const [pos, setPos] = useState(initialPosition);
 
 	useEffect(() => {
@@ -38,7 +40,7 @@ export function CardDragPreview({
 		};
 	}, [offset.x, offset.y]);
 
-	const colors = resolveCardColors(view.cardColors, card);
+	const colors = resolveCardColors(view.cardColors, card, app);
 	const colorStyle = cardColorStyle(colors);
 
 	return createPortal(

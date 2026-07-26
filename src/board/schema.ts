@@ -2,6 +2,8 @@ export const BOARD_VERSION = 1 as const;
 export const UNKNOWN_COLUMN_ID = '__unknown__';
 export const UNKNOWN_COLUMN_LABEL = 'Unknown';
 export const CARD_INFO_NAME_ID = '__name__';
+/** Sentinel property for sorting by note title (header name). */
+export const SORT_HEADER_NAME_ID = CARD_INFO_NAME_ID;
 
 export type LimitTo =
 	| { mode: 'all' }
@@ -21,14 +23,14 @@ export type FilterTextOp =
 	| 'empty'
 	| 'not_empty';
 export type FilterNumericOp = 'eq' | 'neq' | 'lte' | 'lt' | 'gt' | 'gte';
-export type FilterOp = FilterTextOp | FilterNumericOp;
+export type FilterCheckboxOp = 'is_true' | 'is_false';
+export type FilterOp = FilterTextOp | FilterNumericOp | FilterCheckboxOp;
 
 export interface FilterRule {
 	id: string;
 	combinator: FilterCombinator;
 	source: FilterSource;
 	property: string;
-	numeric: boolean;
 	op: FilterOp;
 	value: string;
 	enabled: boolean;
@@ -38,7 +40,6 @@ export interface FilterRule {
 export interface RuleCondition {
 	source: FilterSource;
 	property: string;
-	numeric: boolean;
 	op: FilterOp;
 	value: string;
 }
@@ -53,6 +54,16 @@ export interface CardColorRule extends RuleCondition {
 	enabled: boolean;
 	border: CardColorEffect;
 	background: CardColorEffect;
+}
+
+export type SortDirection = 'asc' | 'desc';
+
+export interface SortRule {
+	id: string;
+	/** Frontmatter property name, or `SORT_HEADER_NAME_ID` for note title. */
+	property: string;
+	direction: SortDirection;
+	enabled: boolean;
 }
 
 export interface CardFieldDef {
@@ -77,6 +88,7 @@ export interface BoardViewConfig {
 	cardFields: CardFieldDef[];
 	cardInfo: CardInfoItem[];
 	filters: FilterRule[];
+	sorts: SortRule[];
 	cardColors: CardColorRule[];
 }
 
@@ -116,7 +128,6 @@ export function createDefaultFilterRule(): FilterRule {
 		combinator: 'and',
 		source: 'property',
 		property: '',
-		numeric: false,
 		op: 'eq',
 		value: '',
 		enabled: true,
@@ -128,12 +139,20 @@ export function createDefaultCardColorRule(): CardColorRule {
 		id: createId(),
 		source: 'property',
 		property: '',
-		numeric: false,
 		op: 'eq',
 		value: '',
 		enabled: true,
 		border: { kind: 'none' },
 		background: { kind: 'none' },
+	};
+}
+
+export function createDefaultSortRule(): SortRule {
+	return {
+		id: createId(),
+		property: '',
+		direction: 'asc',
+		enabled: true,
 	};
 }
 
@@ -151,6 +170,7 @@ export function createDefaultKanbanView(name = 'Kanban'): BoardViewConfig {
 		cardFields: [],
 		cardInfo: createDefaultCardInfo(),
 		filters: [],
+		sorts: [],
 		cardColors: [],
 	};
 }
@@ -177,7 +197,12 @@ export function createDefaultDocument(name = 'Untitled'): BoardDocument {
 }
 
 export function opNeedsValue(op: FilterOp): boolean {
-	return op !== 'empty' && op !== 'not_empty';
+	return (
+		op !== 'empty' &&
+		op !== 'not_empty' &&
+		op !== 'is_true' &&
+		op !== 'is_false'
+	);
 }
 
 const TEXT_OPS: FilterTextOp[] = [
@@ -189,8 +214,10 @@ const TEXT_OPS: FilterTextOp[] = [
 	'not_empty',
 ];
 const NUMERIC_OPS: FilterNumericOp[] = ['eq', 'neq', 'lte', 'lt', 'gt', 'gte'];
+const CHECKBOX_OPS: FilterCheckboxOp[] = ['is_true', 'is_false'];
 const COMBINATORS: FilterCombinator[] = ['and', 'or', 'not'];
 const SOURCES: FilterSource[] = ['property', 'body'];
+const SORT_DIRECTIONS: SortDirection[] = ['asc', 'desc'];
 
 export function isTextOp(op: string): op is FilterTextOp {
 	return (TEXT_OPS as string[]).includes(op);
@@ -200,11 +227,18 @@ export function isNumericOp(op: string): op is FilterNumericOp {
 	return (NUMERIC_OPS as string[]).includes(op);
 }
 
-export function coerceFilterOp(op: FilterOp, numeric: boolean): FilterOp {
-	if (numeric) {
-		return isNumericOp(op) ? op : 'eq';
+export function isCheckboxOp(op: string): op is FilterCheckboxOp {
+	return (CHECKBOX_OPS as string[]).includes(op);
+}
+
+function parseFilterOp(raw: unknown): FilterOp {
+	if (typeof raw !== 'string') {
+		return 'eq';
 	}
-	return isTextOp(op) ? op : 'eq';
+	if (isTextOp(raw) || isNumericOp(raw) || isCheckboxOp(raw)) {
+		return raw;
+	}
+	return 'eq';
 }
 
 export function createCardFieldDef(
@@ -393,20 +427,13 @@ function parseFilterRule(raw: unknown): FilterRule | null {
 	const source = SOURCES.includes(raw.source as FilterSource)
 		? (raw.source as FilterSource)
 		: 'property';
-	const numeric = source === 'property' && Boolean(raw.numeric);
-	const rawOp = typeof raw.op === 'string' ? raw.op : 'eq';
-	const op = coerceFilterOp(
-		(isTextOp(rawOp) || isNumericOp(rawOp) ? rawOp : 'eq') as FilterOp,
-		numeric,
-	);
 
 	return {
 		id: raw.id,
 		combinator,
 		source,
 		property: typeof raw.property === 'string' ? raw.property : '',
-		numeric,
-		op,
+		op: parseFilterOp(raw.op),
 		value: typeof raw.value === 'string' ? raw.value : '',
 		enabled: raw.enabled !== false,
 	};
@@ -449,19 +476,12 @@ function parseCardColorRule(raw: unknown): CardColorRule | null {
 	const source = SOURCES.includes(raw.source as FilterSource)
 		? (raw.source as FilterSource)
 		: 'property';
-	const numeric = source === 'property' && Boolean(raw.numeric);
-	const rawOp = typeof raw.op === 'string' ? raw.op : 'eq';
-	const op = coerceFilterOp(
-		(isTextOp(rawOp) || isNumericOp(rawOp) ? rawOp : 'eq') as FilterOp,
-		numeric,
-	);
 
 	return {
 		id: raw.id,
 		source,
 		property: typeof raw.property === 'string' ? raw.property : '',
-		numeric,
-		op,
+		op: parseFilterOp(raw.op),
 		value: typeof raw.value === 'string' ? raw.value : '',
 		enabled: raw.enabled !== false,
 		border: parseCardColorEffect(raw.border),
@@ -481,6 +501,40 @@ function parseCardColors(raw: unknown): CardColorRule[] {
 		}
 	}
 	return rules;
+}
+
+function parseSortDirection(raw: unknown): SortDirection {
+	if (typeof raw === 'string' && (SORT_DIRECTIONS as string[]).includes(raw)) {
+		return raw as SortDirection;
+	}
+	return 'asc';
+}
+
+function parseSortRule(raw: unknown): SortRule | null {
+	if (!isRecord(raw) || typeof raw.id !== 'string') {
+		return null;
+	}
+
+	return {
+		id: raw.id,
+		property: typeof raw.property === 'string' ? raw.property : '',
+		direction: parseSortDirection(raw.direction),
+		enabled: raw.enabled !== false,
+	};
+}
+
+function parseSorts(raw: unknown): SortRule[] {
+	if (!Array.isArray(raw)) {
+		return [];
+	}
+	const sorts: SortRule[] = [];
+	for (const item of raw) {
+		const rule = parseSortRule(item);
+		if (rule) {
+			sorts.push(rule);
+		}
+	}
+	return sorts;
 }
 
 function parseValues(raw: unknown, fallback: string[]): string[] {
@@ -569,6 +623,7 @@ function parseViews(
 			cardFields,
 			cardInfo: parseCardInfo(item.cardInfo, cardFields),
 			filters: parseFilters(item.filters),
+			sorts: parseSorts(item.sorts),
 			cardColors: parseCardColors(item.cardColors),
 		});
 	}

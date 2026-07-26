@@ -154,7 +154,7 @@ export function BoardCard({ card, view }: BoardCardProps) {
 		void app.workspace.openLinkText(card.filePath, '', false);
 	};
 
-	const colors = resolveCardColors(view.cardColors, card);
+	const colors = resolveCardColors(view.cardColors, card, app);
 
 	return (
 		<div
