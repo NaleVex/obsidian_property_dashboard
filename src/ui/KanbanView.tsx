@@ -9,7 +9,7 @@ import {
 } from '@dnd-kit/core';
 import { Menu, setIcon } from 'obsidian';
 import { MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { BoardViewConfig } from '../board/schema';
+import { KanbanViewConfig } from '../board/schema';
 import { countCards, filterColumns } from '../data/filterCards';
 import { sortColumns } from '../data/sortCards';
 import { BoardCard as BoardCardType } from '../data/types';
@@ -44,7 +44,7 @@ function ToolbarIcon({ name }: { name: string }) {
 }
 
 interface KanbanViewProps {
-	view: BoardViewConfig;
+	view: KanbanViewConfig;
 }
 
 export function KanbanView({ view }: KanbanViewProps) {
@@ -107,7 +107,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 		updateDocument((doc) => ({
 			...doc,
 			views: doc.views.map((item) => {
-				if (item.id !== view.id) {
+				if (item.id !== view.id || item.type !== 'kanban') {
 					return item;
 				}
 				const columnColors = { ...item.columnColors };

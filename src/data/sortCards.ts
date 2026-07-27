@@ -224,6 +224,19 @@ export function sortColumns(
 	}));
 }
 
+export function sortCards(
+	cards: BoardCard[],
+	sorts: SortRule[],
+	app: App,
+): BoardCard[] {
+	const rules = activeSortRules(sorts);
+	if (rules.length === 0) {
+		return cards;
+	}
+
+	return [...cards].sort((a, b) => compareCards(a, b, rules, app));
+}
+
 export function directionLabelsForType(
 	type: PropertyValueType,
 ): { asc: string; desc: string } {

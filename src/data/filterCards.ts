@@ -313,6 +313,18 @@ export function filterColumns(
 	}));
 }
 
+export function filterCards(
+	cards: BoardCard[],
+	rules: FilterRule[],
+	app: App,
+): BoardCard[] {
+	if (groupFilterRules(rules).length === 0) {
+		return cards;
+	}
+
+	return cards.filter((card) => matchesFilterRules(rules, card, app));
+}
+
 export function countCards(columns: BoardColumn[]): number {
 	return columns.reduce((sum, column) => sum + column.cards.length, 0);
 }

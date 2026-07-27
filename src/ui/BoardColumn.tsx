@@ -1,12 +1,12 @@
 import { useDroppable } from '@dnd-kit/core';
 import { CSSProperties, MouseEvent } from 'react';
-import { BoardViewConfig } from '../board/schema';
+import { KanbanViewConfig } from '../board/schema';
 import { BoardColumn as BoardColumnType } from '../data/types';
 import { BoardCard } from './BoardCard';
 
 interface BoardColumnProps {
 	column: BoardColumnType;
-	view: BoardViewConfig;
+	view: KanbanViewConfig;
 	color?: string;
 	onHeaderContextMenu?: (event: MouseEvent<HTMLElement>) => void;
 }

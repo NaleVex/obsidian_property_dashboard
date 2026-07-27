@@ -1,15 +1,15 @@
 import { setIcon } from 'obsidian';
 import { useEffect, useRef } from 'react';
 import {
-	KanbanViewConfig,
-	CardFieldDef,
-	addCardFieldToView,
-	removeCardFieldFromView,
+	TableViewConfig,
+	TableValueDef,
+	addTableValueToView,
+	removeTableValueFromView,
 } from '../board/schema';
 
-interface CardFieldsEditorProps {
-	view: KanbanViewConfig;
-	onUpdateView: (updater: (current: KanbanViewConfig) => KanbanViewConfig) => void;
+interface TableValuesEditorProps {
+	view: TableViewConfig;
+	onUpdateView: (updater: (current: TableViewConfig) => TableViewConfig) => void;
 }
 
 function TrashIcon() {
@@ -22,12 +22,12 @@ function TrashIcon() {
 	return <span ref={ref} className="pk-icon" aria-hidden="true" />;
 }
 
-export function CardFieldsEditor({ view, onUpdateView }: CardFieldsEditorProps) {
-	const updateField = (fieldId: string, patch: Partial<CardFieldDef>) => {
+export function TableValuesEditor({ view, onUpdateView }: TableValuesEditorProps) {
+	const updateValue = (valueId: string, patch: Partial<TableValueDef>) => {
 		onUpdateView((current) => ({
 			...current,
-			cardFields: current.cardFields.map((field) =>
-				field.id === fieldId ? { ...field, ...patch } : field,
+			values: current.values.map((value) =>
+				value.id === valueId ? { ...value, ...patch } : value,
 			),
 		}));
 	};
@@ -35,18 +35,18 @@ export function CardFieldsEditor({ view, onUpdateView }: CardFieldsEditorProps) 
 	return (
 		<div className="pk-panel pk-panel-flat">
 			<div className="pk-panel-header">
-				<h3 className="pk-panel-title">Fields on a card</h3>
+				<h3 className="pk-panel-title">Values</h3>
 			</div>
 			<p className="pk-panel-hint">
-				Properties retrieved from notes and available for card display.
+				Properties retrieved from notes and used as table columns.
 			</p>
 
 			<div className="pk-field-rows">
-				{view.cardFields.map((field) => (
-					<div key={field.id} className="pk-field-row">
+				{view.values.map((value) => (
+					<div key={value.id} className="pk-field-row">
 						<select
 							className="pk-select"
-							value={field.type}
+							value={value.type}
 							aria-label="Field type"
 							onChange={() => {
 								/* only property for now */
@@ -57,42 +57,30 @@ export function CardFieldsEditor({ view, onUpdateView }: CardFieldsEditorProps) 
 						<input
 							className="pk-input"
 							type="text"
-							value={field.property}
+							value={value.property}
 							placeholder="Property name"
 							aria-label="Property name"
 							onChange={(event) =>
-								updateField(field.id, { property: event.target.value })
+								updateValue(value.id, { property: event.target.value })
 							}
 						/>
 						<input
 							className="pk-input"
 							type="text"
-							value={field.label}
+							value={value.label}
 							placeholder="Display name"
 							aria-label="Display name"
 							onChange={(event) =>
-								updateField(field.id, { label: event.target.value })
+								updateValue(value.id, { label: event.target.value })
 							}
 						/>
-						<label className="pk-toggle" title="display none">
-							<input
-								type="checkbox"
-								checked={field.showIfMissing}
-								onChange={(event) =>
-									updateField(field.id, {
-										showIfMissing: event.target.checked,
-									})
-								}
-							/>
-							<span>display none</span>
-						</label>
 						<button
 							type="button"
 							className="pk-icon-button"
-							aria-label="Delete field"
+							aria-label="Delete value"
 							onClick={() =>
 								onUpdateView((current) =>
-									removeCardFieldFromView(current, field.id),
+									removeTableValueFromView(current, value.id),
 								)
 							}
 						>
@@ -105,7 +93,7 @@ export function CardFieldsEditor({ view, onUpdateView }: CardFieldsEditorProps) 
 			<button
 				type="button"
 				className="pk-button"
-				onClick={() => onUpdateView((current) => addCardFieldToView(current))}
+				onClick={() => onUpdateView((current) => addTableValueToView(current))}
 			>
 				+
 			</button>

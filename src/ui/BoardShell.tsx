@@ -2,12 +2,16 @@ import { Menu, setIcon } from 'obsidian';
 import { useEffect, useRef, type MouseEvent } from 'react';
 import {
 	BoardViewConfig,
-	cloneKanbanView,
+	cloneView,
 	createDefaultKanbanView,
+	createDefaultTableView,
+	isKanbanView,
+	isTableView,
 } from '../board/schema';
 import { useBoardApp } from './BoardAppContext';
 import { BoardSettingsModal } from './BoardSettingsModal';
 import { KanbanView } from './KanbanView';
+import { TableView } from './TableView';
 import { promptForText } from './TextPromptModal';
 
 function Icon({ name }: { name: string }) {
@@ -49,25 +53,44 @@ export function BoardShell() {
 		}));
 	};
 
-	const addKanbanView = () => {
+	const addView = (type: 'kanban' | 'table') => {
 		void promptForText(app, {
 			title: 'New view',
 			label: 'View name',
-			defaultValue: 'Kanban',
-			placeholder: 'Kanban',
+			defaultValue: type === 'kanban' ? 'Kanban' : 'Table',
+			placeholder: type === 'kanban' ? 'Kanban' : 'Table',
 			submitLabel: 'Create',
 		}).then((name) => {
 			if (name === null) {
 				return;
 			}
-			const trimmed = name.trim() || 'Kanban';
-			const view = createDefaultKanbanView(trimmed);
+			const trimmed = name.trim() || (type === 'kanban' ? 'Kanban' : 'Table');
+			const view =
+				type === 'kanban'
+					? createDefaultKanbanView(trimmed)
+					: createDefaultTableView(trimmed);
 			updateDocument((doc) => ({
 				...doc,
 				views: [...doc.views, view],
 				activeViewId: view.id,
 			}));
 		});
+	};
+
+	const openAddViewMenu = (event: MouseEvent) => {
+		event.preventDefault();
+		const menu = new Menu();
+		menu.addItem((item) => {
+			item.setTitle('Kanban').setIcon('columns').onClick(() => {
+				addView('kanban');
+			});
+		});
+		menu.addItem((item) => {
+			item.setTitle('Table').setIcon('table').onClick(() => {
+				addView('table');
+			});
+		});
+		menu.showAtMouseEvent(event.nativeEvent);
 	};
 
 	const renameView = (view: BoardViewConfig) => {
@@ -94,7 +117,7 @@ export function BoardShell() {
 	};
 
 	const copyView = (view: BoardViewConfig) => {
-		const cloned = cloneKanbanView(view);
+		const cloned = cloneView(view);
 		updateDocument((doc) => ({
 			...doc,
 			views: [...doc.views, cloned],
@@ -171,9 +194,9 @@ export function BoardShell() {
 					<button
 						type="button"
 						className="pk-tab pk-tab-add"
-						onClick={addKanbanView}
-						aria-label="Add kanban view"
-						title="Add kanban view"
+						onClick={openAddViewMenu}
+						aria-label="Add view"
+						title="Add view"
 					>
 						+
 					</button>
@@ -190,10 +213,12 @@ export function BoardShell() {
 				</button>
 			</header>
 
-			{activeView?.type === 'kanban' ? (
+			{activeView && isKanbanView(activeView) ? (
 				<KanbanView view={activeView} />
+			) : activeView && isTableView(activeView) ? (
+				<TableView view={activeView} />
 			) : (
-				<div className="pk-board-empty">No views yet. Add a kanban view.</div>
+				<div className="pk-board-empty">No views yet. Add a view.</div>
 			)}
 		</div>
 	);

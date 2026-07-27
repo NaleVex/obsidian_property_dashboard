@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BoardViewConfig } from '../board/schema';
+import { KanbanViewConfig } from '../board/schema';
 import { resolveCardColors } from '../data/filterCards';
 import { BoardCard as BoardCardType } from '../data/types';
 import { useBoardApp } from './BoardAppContext';
@@ -8,7 +8,7 @@ import { CardBody, cardColorClassName, cardColorStyle } from './BoardCard';
 
 interface CardDragPreviewProps {
 	card: BoardCardType;
-	view: BoardViewConfig;
+	view: KanbanViewConfig;
 	/** Offset from pointer to top-left of the preview, captured at drag start. */
 	offset: { x: number; y: number };
 	/** Initial top-left of the preview in viewport coordinates. */

@@ -16,15 +16,15 @@ import { CSS } from '@dnd-kit/utilities';
 import { setIcon } from 'obsidian';
 import { useEffect, useRef } from 'react';
 import {
-	KanbanViewConfig,
-	CARD_INFO_NAME_ID,
-	CardInfoItem,
-	normalizeCardInfo,
+	TABLE_COLUMN_NAME_ID,
+	TableColumnItem,
+	TableViewConfig,
+	normalizeTableColumns,
 } from '../board/schema';
 import { useBoardApp } from './BoardAppContext';
 
-interface CardsInfoPanelProps {
-	view: KanbanViewConfig;
+interface TableColumnsPanelProps {
+	view: TableViewConfig;
 }
 
 function GripIcon() {
@@ -37,24 +37,24 @@ function GripIcon() {
 	return <span ref={ref} className="pk-icon" aria-hidden="true" />;
 }
 
-function itemLabel(view: KanbanViewConfig, item: CardInfoItem): string {
+function itemLabel(view: TableViewConfig, item: TableColumnItem): string {
 	if (item.kind === 'name') {
 		return 'Name';
 	}
-	const field = view.cardFields.find((entry) => entry.id === item.fieldId);
-	if (!field) {
+	const value = view.values.find((entry) => entry.id === item.fieldId);
+	if (!value) {
 		return 'Field';
 	}
-	return field.label.trim() || field.property.trim() || 'Untitled field';
+	return value.label.trim() || value.property.trim() || 'Untitled field';
 }
 
-function SortableInfoRow({
+function SortableColumnRow({
 	view,
 	item,
 	onToggle,
 }: {
-	view: KanbanViewConfig;
-	item: CardInfoItem;
+	view: TableViewConfig;
+	item: TableColumnItem;
 	onToggle: (id: string, enabled: boolean) => void;
 }) {
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -90,22 +90,22 @@ function SortableInfoRow({
 	);
 }
 
-export function CardsInfoPanel({ view }: CardsInfoPanelProps) {
+export function TableColumnsPanel({ view }: TableColumnsPanelProps) {
 	const { updateDocument } = useBoardApp();
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
 	);
 
-	const cardInfo = normalizeCardInfo(view.cardInfo, view.cardFields);
+	const columns = normalizeTableColumns(view.columns, view.values);
 
-	const patchCardInfo = (next: CardInfoItem[]) => {
+	const patchColumns = (next: TableColumnItem[]) => {
 		updateDocument((doc) => ({
 			...doc,
 			views: doc.views.map((item) =>
-				item.id === view.id && item.type === 'kanban'
+				item.id === view.id && item.type === 'table'
 					? {
 							...item,
-							cardInfo: normalizeCardInfo(next, item.cardFields),
+							columns: normalizeTableColumns(next, item.values),
 						}
 					: item,
 			),
@@ -113,8 +113,8 @@ export function CardsInfoPanel({ view }: CardsInfoPanelProps) {
 	};
 
 	const onToggle = (id: string, enabled: boolean) => {
-		patchCardInfo(
-			cardInfo.map((item) => (item.id === id ? { ...item, enabled } : item)),
+		patchColumns(
+			columns.map((item) => (item.id === id ? { ...item, enabled } : item)),
 		);
 	};
 
@@ -123,21 +123,21 @@ export function CardsInfoPanel({ view }: CardsInfoPanelProps) {
 		if (!over || active.id === over.id) {
 			return;
 		}
-		const oldIndex = cardInfo.findIndex((item) => item.id === active.id);
-		const newIndex = cardInfo.findIndex((item) => item.id === over.id);
+		const oldIndex = columns.findIndex((item) => item.id === active.id);
+		const newIndex = columns.findIndex((item) => item.id === over.id);
 		if (oldIndex < 0 || newIndex < 0) {
 			return;
 		}
-		patchCardInfo(arrayMove(cardInfo, oldIndex, newIndex));
+		patchColumns(arrayMove(columns, oldIndex, newIndex));
 	};
 
 	return (
 		<div className="pk-panel">
 			<div className="pk-panel-header">
-				<h3 className="pk-panel-title">Cards info</h3>
+				<h3 className="pk-panel-title">Columns</h3>
 			</div>
 			<p className="pk-panel-hint">
-				Choose which fields appear on cards and in what order.
+				Choose which columns are visible and in what order.
 			</p>
 
 			<DndContext
@@ -146,13 +146,17 @@ export function CardsInfoPanel({ view }: CardsInfoPanelProps) {
 				onDragEnd={onDragEnd}
 			>
 				<SortableContext
-					items={cardInfo.map((item) => item.id)}
+					items={columns.map((item) => item.id)}
 					strategy={verticalListSortingStrategy}
 				>
 					<div className="pk-cards-info-list">
-						{cardInfo.map((item) => (
-							<SortableInfoRow
-								key={item.id === CARD_INFO_NAME_ID ? CARD_INFO_NAME_ID : item.id}
+						{columns.map((item) => (
+							<SortableColumnRow
+								key={
+									item.id === TABLE_COLUMN_NAME_ID
+										? TABLE_COLUMN_NAME_ID
+										: item.id
+								}
 								view={view}
 								item={item}
 								onToggle={onToggle}

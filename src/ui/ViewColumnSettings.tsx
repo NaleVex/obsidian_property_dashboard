@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { BoardViewConfig } from '../board/schema';
+import { KanbanViewConfig } from '../board/schema';
 
 interface ViewColumnSettingsProps {
-	view: BoardViewConfig;
-	onUpdateView: (updater: (current: BoardViewConfig) => BoardViewConfig) => void;
+	view: KanbanViewConfig;
+	onUpdateView: (updater: (current: KanbanViewConfig) => KanbanViewConfig) => void;
 }
 
 export function ViewColumnSettings({

@@ -23,6 +23,7 @@ import {
 	FilterSource,
 	createDefaultFilterRule,
 	createId,
+	getViewPropertyFields,
 	opNeedsValue,
 } from '../board/schema';
 import {
@@ -279,7 +280,7 @@ function SortableFilterRow({
 function cardFieldPropertyOptions(view: BoardViewConfig): PropertyOption[] {
 	const seen = new Set<string>();
 	const options: PropertyOption[] = [];
-	for (const field of view.cardFields) {
+	for (const field of getViewPropertyFields(view)) {
 		const property = field.property.trim();
 		if (!property || seen.has(property)) {
 			continue;

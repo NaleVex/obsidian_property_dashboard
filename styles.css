@@ -848,3 +848,131 @@
 	border: 1px solid color-mix(in srgb, var(--text-normal) 25%, transparent);
 	box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 12%, transparent);
 }
+
+/* Table view */
+.pk-table-view {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+}
+
+.pk-table-toolbar {
+	display: flex;
+	align-items: center;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	flex-shrink: 0;
+}
+
+.pk-table-scroll {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	padding: 0 12px 12px;
+}
+
+.pk-table {
+	width: max-content;
+	border-collapse: separate;
+	border-spacing: 0;
+	table-layout: auto;
+}
+
+.pk-table-header {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+}
+
+.pk-table-header-cell {
+	position: relative;
+	padding: 0;
+	background: var(--background-secondary);
+	border-bottom: 1px solid var(--background-modifier-border);
+	border-right: 1px solid var(--background-modifier-border);
+	vertical-align: middle;
+}
+
+.pk-table-header-cell:first-child {
+	border-left: 1px solid var(--background-modifier-border);
+}
+
+.pk-table-header-content {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 8px 10px;
+	min-height: 36px;
+}
+
+.pk-table-header-drag {
+	flex-shrink: 0;
+	cursor: grab;
+}
+
+.pk-table-header-label {
+	flex: 1;
+	min-width: 0;
+	font-size: var(--font-ui-small);
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.pk-table-resize-handle {
+	position: absolute;
+	top: 0;
+	right: -3px;
+	width: 6px;
+	height: 100%;
+	cursor: col-resize;
+	z-index: 3;
+}
+
+.pk-table-resize-handle:hover {
+	background: var(--interactive-accent);
+	opacity: 0.35;
+}
+
+.pk-table-row {
+	cursor: pointer;
+	background: var(--background-primary);
+}
+
+.pk-table-row:hover {
+	background: var(--background-modifier-hover);
+}
+
+.pk-table-row-colored-border > td:first-child {
+	box-shadow: inset 3px 0 0 var(--pk-card-border);
+}
+
+.pk-table-row-colored-bg > td {
+	background: var(--pk-card-bg);
+}
+
+.pk-table-row-colored-bg:hover > td {
+	background: var(--pk-card-bg);
+}
+
+.pk-table-cell {
+	padding: 8px 10px;
+	font-size: var(--font-ui-small);
+	border-bottom: 1px solid var(--background-modifier-border);
+	border-right: 1px solid var(--background-modifier-border);
+	vertical-align: top;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	box-sizing: border-box;
+}
+
+.pk-table-cell:first-child {
+	border-left: 1px solid var(--background-modifier-border);
+}
+
+.pk-table-cell-name .pk-table-cell-title {
+	font-weight: 500;
+}

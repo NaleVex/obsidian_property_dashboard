@@ -2,6 +2,7 @@ export const BOARD_VERSION = 1 as const;
 export const UNKNOWN_COLUMN_ID = '__unknown__';
 export const UNKNOWN_COLUMN_LABEL = 'Unknown';
 export const CARD_INFO_NAME_ID = '__name__';
+export const TABLE_COLUMN_NAME_ID = CARD_INFO_NAME_ID;
 /** Sentinel property for sorting by note title (header name). */
 export const SORT_HEADER_NAME_ID = CARD_INFO_NAME_ID;
 
@@ -10,7 +11,7 @@ export type LimitTo =
 	| { mode: 'siblings' }
 	| { mode: 'folder'; path: string };
 
-export type BoardViewType = 'kanban';
+export type BoardViewType = 'kanban' | 'table';
 export type CardFieldType = 'property';
 
 export type FilterCombinator = 'and' | 'or' | 'not';
@@ -78,9 +79,21 @@ export type CardInfoItem =
 	| { id: typeof CARD_INFO_NAME_ID; kind: 'name'; enabled: boolean }
 	| { id: string; kind: 'field'; fieldId: string; enabled: boolean };
 
-export interface BoardViewConfig {
+export interface TableValueDef {
 	id: string;
-	type: BoardViewType;
+	type: CardFieldType;
+	property: string;
+	label: string;
+	showIfMissing: boolean;
+}
+
+export type TableColumnItem =
+	| { id: typeof TABLE_COLUMN_NAME_ID; kind: 'name'; enabled: boolean }
+	| { id: string; kind: 'field'; fieldId: string; enabled: boolean };
+
+export interface KanbanViewConfig {
+	id: string;
+	type: 'kanban';
 	name: string;
 	triggerProperty: string;
 	values: string[];
@@ -92,16 +105,44 @@ export interface BoardViewConfig {
 	cardColors: CardColorRule[];
 }
 
+export interface TableViewConfig {
+	id: string;
+	type: 'table';
+	name: string;
+	values: TableValueDef[];
+	columns: TableColumnItem[];
+	columnWidths: Record<string, number>;
+	filters: FilterRule[];
+	sorts: SortRule[];
+	cardColors: CardColorRule[];
+}
+
+export type BoardViewConfig = KanbanViewConfig | TableViewConfig;
+
+export function isKanbanView(view: BoardViewConfig): view is KanbanViewConfig {
+	return view.type === 'kanban';
+}
+
+export function isTableView(view: BoardViewConfig): view is TableViewConfig {
+	return view.type === 'table';
+}
+
 export interface BoardSettings {
 	limitTo: LimitTo;
 }
 
 /** Effective indexing config: board scope + active view column settings. */
-export interface NoteIndexConfig {
-	limitTo: LimitTo;
-	triggerProperty: string;
-	values: string[];
-}
+export type NoteIndexConfig =
+	| {
+			indexMode: 'kanban';
+			limitTo: LimitTo;
+			triggerProperty: string;
+			values: string[];
+	  }
+	| {
+			indexMode: 'table';
+			limitTo: LimitTo;
+	  };
 
 export interface BoardDocument {
 	version: typeof BOARD_VERSION;
@@ -159,7 +200,7 @@ export function createDefaultSortRule(): SortRule {
 export const DEFAULT_TRIGGER_PROPERTY = 'status';
 export const DEFAULT_VALUES = ['todo', 'in-progress', 'done'];
 
-export function createDefaultKanbanView(name = 'Kanban'): BoardViewConfig {
+export function createDefaultKanbanView(name = 'Kanban'): KanbanViewConfig {
 	return {
 		id: createId(),
 		type: 'kanban',
@@ -175,12 +216,35 @@ export function createDefaultKanbanView(name = 'Kanban'): BoardViewConfig {
 	};
 }
 
-export function cloneKanbanView(source: BoardViewConfig): BoardViewConfig {
+export function createDefaultTableColumns(): TableColumnItem[] {
+	return [{ id: TABLE_COLUMN_NAME_ID, kind: 'name', enabled: true }];
+}
+
+export function createDefaultTableView(name = 'Table'): TableViewConfig {
+	return {
+		id: createId(),
+		type: 'table',
+		name,
+		values: [],
+		columns: createDefaultTableColumns(),
+		columnWidths: {},
+		filters: [],
+		sorts: [],
+		cardColors: [],
+	};
+}
+
+export function cloneView(source: BoardViewConfig): BoardViewConfig {
 	return {
 		...structuredClone(source),
 		id: createId(),
 		name: `${source.name} copy`,
 	};
+}
+
+/** @deprecated Use cloneView instead */
+export function cloneKanbanView(source: KanbanViewConfig): KanbanViewConfig {
+	return cloneView(source) as KanbanViewConfig;
 }
 
 export function createDefaultDocument(name = 'Untitled'): BoardDocument {
@@ -311,7 +375,121 @@ export function normalizeCardInfo(
 	return result;
 }
 
-export function addCardFieldToView(view: BoardViewConfig): BoardViewConfig {
+export function createTableValueDef(
+	partial: Partial<Omit<TableValueDef, 'id' | 'type'>> = {},
+): TableValueDef {
+	return {
+		id: createId(),
+		type: 'property',
+		property: partial.property ?? '',
+		label: partial.label ?? '',
+		showIfMissing: partial.showIfMissing ?? false,
+	};
+}
+
+export function getViewPropertyFields(
+	view: BoardViewConfig,
+): Array<{ property: string; label: string }> {
+	if (isKanbanView(view)) {
+		return view.cardFields.map((field) => ({
+			property: field.property,
+			label: field.label,
+		}));
+	}
+	return view.values.map((value) => ({
+		property: value.property,
+		label: value.label,
+	}));
+}
+
+/** Ensure Name exists; drop orphan field refs; keep order. */
+export function normalizeTableColumns(
+	columns: TableColumnItem[],
+	values: TableValueDef[],
+): TableColumnItem[] {
+	const fieldIds = new Set(values.map((value) => value.id));
+	const seen = new Set<string>();
+	const result: TableColumnItem[] = [];
+
+	for (const item of columns) {
+		if (item.kind === 'name') {
+			if (seen.has(TABLE_COLUMN_NAME_ID)) {
+				continue;
+			}
+			seen.add(TABLE_COLUMN_NAME_ID);
+			result.push({
+				id: TABLE_COLUMN_NAME_ID,
+				kind: 'name',
+				enabled: item.enabled,
+			});
+			continue;
+		}
+
+		if (!fieldIds.has(item.fieldId) || seen.has(item.id)) {
+			continue;
+		}
+		seen.add(item.id);
+		result.push({
+			id: item.id,
+			kind: 'field',
+			fieldId: item.fieldId,
+			enabled: item.enabled,
+		});
+	}
+
+	if (!seen.has(TABLE_COLUMN_NAME_ID)) {
+		result.unshift({
+			id: TABLE_COLUMN_NAME_ID,
+			kind: 'name',
+			enabled: true,
+		});
+	}
+
+	for (const value of values) {
+		if (result.some((item) => item.kind === 'field' && item.fieldId === value.id)) {
+			continue;
+		}
+		result.push({
+			id: createId(),
+			kind: 'field',
+			fieldId: value.id,
+			enabled: true,
+		});
+	}
+
+	return result;
+}
+
+export function addTableValueToView(view: TableViewConfig): TableViewConfig {
+	const value = createTableValueDef();
+	const values = [...view.values, value];
+	const columns = [
+		...view.columns,
+		{ id: createId(), kind: 'field' as const, fieldId: value.id, enabled: true },
+	];
+	return {
+		...view,
+		values,
+		columns: normalizeTableColumns(columns, values),
+	};
+}
+
+export function removeTableValueFromView(
+	view: TableViewConfig,
+	valueId: string,
+): TableViewConfig {
+	const values = view.values.filter((value) => value.id !== valueId);
+	const columns = view.columns.filter(
+		(item) => !(item.kind === 'field' && item.fieldId === valueId),
+	);
+	return {
+		...view,
+		values,
+		columns: normalizeTableColumns(columns, values),
+	};
+}
+
+export function addCardFieldToView(view: KanbanViewConfig): KanbanViewConfig {
 	const field = createCardFieldDef();
 	const cardFields = [...view.cardFields, field];
 	const cardInfo = [
@@ -326,9 +504,9 @@ export function addCardFieldToView(view: BoardViewConfig): BoardViewConfig {
 }
 
 export function removeCardFieldFromView(
-	view: BoardViewConfig,
+	view: KanbanViewConfig,
 	fieldId: string,
-): BoardViewConfig {
+): KanbanViewConfig {
 	const cardFields = view.cardFields.filter((field) => field.id !== fieldId);
 	const cardInfo = view.cardInfo.filter(
 		(item) => !(item.kind === 'field' && item.fieldId === fieldId),
@@ -583,6 +761,131 @@ function parseLegacySettings(raw: unknown): LegacyBoardSettings {
 	};
 }
 
+function parseTableValues(raw: unknown): TableValueDef[] {
+	if (!Array.isArray(raw)) {
+		return [];
+	}
+
+	const values: TableValueDef[] = [];
+	for (const item of raw) {
+		if (!isRecord(item) || typeof item.id !== 'string') {
+			continue;
+		}
+		if (item.type !== 'property') {
+			continue;
+		}
+		values.push({
+			id: item.id,
+			type: 'property',
+			property: typeof item.property === 'string' ? item.property : '',
+			label: typeof item.label === 'string' ? item.label : '',
+			showIfMissing: Boolean(item.showIfMissing),
+		});
+	}
+	return values;
+}
+
+function parseTableColumns(
+	raw: unknown,
+	values: TableValueDef[],
+): TableColumnItem[] {
+	const items: TableColumnItem[] = [];
+	if (!Array.isArray(raw)) {
+		return normalizeTableColumns(createDefaultTableColumns(), values);
+	}
+
+	for (const item of raw) {
+		if (!isRecord(item) || typeof item.id !== 'string') {
+			continue;
+		}
+		if (item.kind === 'name' || item.id === TABLE_COLUMN_NAME_ID) {
+			items.push({
+				id: TABLE_COLUMN_NAME_ID,
+				kind: 'name',
+				enabled: item.enabled !== false,
+			});
+			continue;
+		}
+		if (item.kind === 'field' && typeof item.fieldId === 'string') {
+			items.push({
+				id: item.id,
+				kind: 'field',
+				fieldId: item.fieldId,
+				enabled: item.enabled !== false,
+			});
+		}
+	}
+
+	return normalizeTableColumns(items, values);
+}
+
+function parseColumnWidths(raw: unknown): Record<string, number> {
+	if (!isRecord(raw)) {
+		return {};
+	}
+	const widths: Record<string, number> = {};
+	for (const [key, value] of Object.entries(raw)) {
+		if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+			widths[key] = value;
+		}
+	}
+	return widths;
+}
+
+function parseKanbanView(
+	item: Record<string, unknown>,
+	legacy: LegacyBoardSettings,
+): KanbanViewConfig | null {
+	if (typeof item.id !== 'string' || typeof item.name !== 'string') {
+		return null;
+	}
+
+	const cardFields = parseCardFields(item.cardFields);
+	const hasViewTrigger = typeof item.triggerProperty === 'string';
+	const hasViewValues = Array.isArray(item.values);
+	const hasViewColors = isRecord(item.columnColors);
+
+	return {
+		id: item.id,
+		type: 'kanban',
+		name: item.name.trim() || 'Kanban',
+		triggerProperty: hasViewTrigger
+			? parseTriggerProperty(item.triggerProperty, legacy.triggerProperty)
+			: legacy.triggerProperty,
+		values: hasViewValues
+			? parseValues(item.values, legacy.values)
+			: [...legacy.values],
+		columnColors: hasViewColors
+			? parseColumnColors(item.columnColors)
+			: { ...legacy.columnColors },
+		cardFields,
+		cardInfo: parseCardInfo(item.cardInfo, cardFields),
+		filters: parseFilters(item.filters),
+		sorts: parseSorts(item.sorts),
+		cardColors: parseCardColors(item.cardColors),
+	};
+}
+
+function parseTableView(item: Record<string, unknown>): TableViewConfig | null {
+	if (typeof item.id !== 'string' || typeof item.name !== 'string') {
+		return null;
+	}
+
+	const values = parseTableValues(item.values);
+
+	return {
+		id: item.id,
+		type: 'table',
+		name: item.name.trim() || 'Table',
+		values,
+		columns: parseTableColumns(item.columns, values),
+		columnWidths: parseColumnWidths(item.columnWidths),
+		filters: parseFilters(item.filters),
+		sorts: parseSorts(item.sorts),
+		cardColors: parseCardColors(item.cardColors),
+	};
+}
+
 function parseViews(
 	raw: unknown,
 	legacy: LegacyBoardSettings,
@@ -596,36 +899,19 @@ function parseViews(
 		if (!isRecord(item)) {
 			continue;
 		}
-		if (typeof item.id !== 'string' || typeof item.name !== 'string') {
+		if (item.type === 'kanban') {
+			const view = parseKanbanView(item, legacy);
+			if (view) {
+				views.push(view);
+			}
 			continue;
 		}
-		if (item.type !== 'kanban') {
-			continue;
+		if (item.type === 'table') {
+			const view = parseTableView(item);
+			if (view) {
+				views.push(view);
+			}
 		}
-		const cardFields = parseCardFields(item.cardFields);
-		const hasViewTrigger = typeof item.triggerProperty === 'string';
-		const hasViewValues = Array.isArray(item.values);
-		const hasViewColors = isRecord(item.columnColors);
-
-		views.push({
-			id: item.id,
-			type: 'kanban',
-			name: item.name.trim() || 'Kanban',
-			triggerProperty: hasViewTrigger
-				? parseTriggerProperty(item.triggerProperty, legacy.triggerProperty)
-				: legacy.triggerProperty,
-			values: hasViewValues
-				? parseValues(item.values, legacy.values)
-				: [...legacy.values],
-			columnColors: hasViewColors
-				? parseColumnColors(item.columnColors)
-				: { ...legacy.columnColors },
-			cardFields,
-			cardInfo: parseCardInfo(item.cardInfo, cardFields),
-			filters: parseFilters(item.filters),
-			sorts: parseSorts(item.sorts),
-			cardColors: parseCardColors(item.cardColors),
-		});
 	}
 	return views;
 }

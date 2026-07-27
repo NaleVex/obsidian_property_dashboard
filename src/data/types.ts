@@ -20,6 +20,8 @@ export interface BoardColumn {
 
 export interface NoteIndexState {
 	columns: BoardColumn[];
+	/** Flat card list populated in table index mode. */
+	cards: BoardCard[];
 	isLoading: boolean;
 	cardCount: number;
 }

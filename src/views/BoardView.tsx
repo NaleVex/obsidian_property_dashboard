@@ -5,6 +5,7 @@ import {
 	BoardDocument,
 	DEFAULT_TRIGGER_PROPERTY,
 	DEFAULT_VALUES,
+	isTableView,
 	parseBoardDocument,
 	serializeBoardDocument,
 } from '../board/schema';
@@ -94,14 +95,30 @@ export class BoardView extends TextFileView {
 		const activeView =
 			this.document.views.find((view) => view.id === this.document.activeViewId) ??
 			this.document.views[0];
+
+		if (activeView && isTableView(activeView)) {
+			this.noteIndex.configure(
+				{
+					indexMode: 'table',
+					limitTo: this.document.settings.limitTo,
+				},
+				boardPath,
+				activeView.values,
+			);
+			return;
+		}
+
 		this.noteIndex.configure(
 			{
+				indexMode: 'kanban',
 				limitTo: this.document.settings.limitTo,
 				triggerProperty: activeView?.triggerProperty ?? DEFAULT_TRIGGER_PROPERTY,
-				values: activeView?.values ?? [...DEFAULT_VALUES],
+				values: activeView?.type === 'kanban'
+					? activeView.values
+					: [...DEFAULT_VALUES],
 			},
 			boardPath,
-			activeView?.cardFields ?? [],
+			activeView?.type === 'kanban' ? activeView.cardFields : [],
 		);
 	}
 

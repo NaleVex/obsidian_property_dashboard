@@ -20,6 +20,7 @@ import { debounce } from '../utils/debounce';
 function createEmptyState(isLoading: boolean): NoteIndexState {
 	return {
 		columns: [],
+		cards: [],
 		isLoading,
 		cardCount: 0,
 	};
@@ -131,7 +132,7 @@ export class NoteIndex {
 	}
 
 	async updateTriggerProperty(filePath: string, columnId: string): Promise<void> {
-		if (!this.settings) {
+		if (!this.settings || this.settings.indexMode !== 'kanban') {
 			return;
 		}
 
@@ -154,7 +155,9 @@ export class NoteIndex {
 
 		try {
 			await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
-				frontmatter[this.settings!.triggerProperty] = newValue;
+				if (this.settings?.indexMode === 'kanban') {
+					frontmatter[this.settings.triggerProperty] = newValue;
+				}
 			});
 		} catch (error) {
 			this.cardIndex.set(filePath, previous);
@@ -175,13 +178,11 @@ export class NoteIndex {
 		rawValue: string,
 	): void {
 		const card = this.cardIndex.get(filePath);
-		if (!card) {
+		if (!card || !this.settings || this.settings.indexMode !== 'kanban') {
 			return;
 		}
 		const frontmatter = { ...card.frontmatter };
-		if (this.settings) {
-			frontmatter[this.settings.triggerProperty] = rawValue;
-		}
+		frontmatter[this.settings.triggerProperty] = rawValue;
 		this.cardIndex.set(filePath, {
 			...card,
 			columnId,
@@ -303,14 +304,23 @@ export class NoteIndex {
 
 		const cache = this.app.metadataCache.getFileCache(file);
 		const frontmatter = cache?.frontmatter;
-		const trigger = getTriggerFromFrontmatter(
-			frontmatter,
-			this.settings.triggerProperty,
-			this.settings.values,
-		);
 
-		if (!trigger.hasProperty) {
-			return null;
+		let columnId = '';
+		let rawValue = '';
+
+		if (this.settings.indexMode === 'kanban') {
+			const trigger = getTriggerFromFrontmatter(
+				frontmatter,
+				this.settings.triggerProperty,
+				this.settings.values,
+			);
+
+			if (!trigger.hasProperty) {
+				return null;
+			}
+
+			columnId = trigger.columnId;
+			rawValue = trigger.rawValue;
 		}
 
 		let body = '';
@@ -325,8 +335,8 @@ export class NoteIndex {
 			id: file.path,
 			filePath: file.path,
 			title: file.basename,
-			columnId: trigger.columnId,
-			rawValue: trigger.rawValue,
+			columnId,
+			rawValue,
 			fields: this.readCardFields(frontmatter),
 			frontmatter: snapshotFrontmatter(frontmatter),
 			body,
@@ -336,6 +346,19 @@ export class NoteIndex {
 	private buildStateFromIndex(isLoading: boolean): NoteIndexState {
 		if (!this.settings) {
 			return createEmptyState(isLoading);
+		}
+
+		const cards = Array.from(this.cardIndex.values()).sort((a, b) =>
+			a.title.localeCompare(b.title),
+		);
+
+		if (this.settings.indexMode === 'table') {
+			return {
+				columns: [],
+				cards,
+				isLoading,
+				cardCount: cards.length,
+			};
 		}
 
 		const columns: BoardColumn[] = this.settings.values.map((value) => ({
@@ -352,10 +375,6 @@ export class NoteIndex {
 
 		const columnMap = new Map(columns.map((column) => [column.id, column]));
 
-		const cards = Array.from(this.cardIndex.values()).sort((a, b) =>
-			a.title.localeCompare(b.title),
-		);
-
 		for (const card of cards) {
 			const column = columnMap.get(card.columnId) ?? columnMap.get(UNKNOWN_COLUMN_ID);
 			column?.cards.push(card);
@@ -368,6 +387,7 @@ export class NoteIndex {
 
 		return {
 			columns: visibleColumns,
+			cards: [],
 			isLoading,
 			cardCount: cards.length,
 		};

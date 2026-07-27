@@ -21,6 +21,7 @@ import {
 	SortDirection,
 	SortRule,
 	createDefaultSortRule,
+	getViewPropertyFields,
 } from '../board/schema';
 import { getPropertyType } from '../data/propertyType';
 import { directionLabelsForType } from '../data/sortCards';
@@ -60,7 +61,7 @@ function sortPropertyOptions(view: BoardViewConfig): PropertyOption[] {
 		{ property: SORT_HEADER_NAME_ID, label: 'Header name' },
 	];
 	const seen = new Set<string>([SORT_HEADER_NAME_ID]);
-	for (const field of view.cardFields) {
+	for (const field of getViewPropertyFields(view)) {
 		const property = field.property.trim();
 		if (!property || seen.has(property)) {
 			continue;

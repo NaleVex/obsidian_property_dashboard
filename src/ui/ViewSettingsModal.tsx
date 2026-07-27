@@ -1,8 +1,9 @@
 import { App, Modal } from 'obsidian';
 import { Root, createRoot } from 'react-dom/client';
 import { StrictMode, useState } from 'react';
-import { BoardDocument, BoardViewConfig } from '../board/schema';
+import { BoardDocument, BoardViewConfig, isKanbanView, isTableView, KanbanViewConfig, TableViewConfig } from '../board/schema';
 import { CardFieldsEditor } from './CardFieldsEditor';
+import { TableValuesEditor } from './TableValuesEditor';
 import { ViewColumnSettings } from './ViewColumnSettings';
 
 export interface ViewSettingsModalHost {
@@ -35,10 +36,32 @@ function ViewSettingsForm({
 		setTick((value) => value + 1);
 	};
 
+	const onUpdateKanbanView = (
+		updater: (current: KanbanViewConfig) => KanbanViewConfig,
+	) => {
+		onUpdateView((current) =>
+			current.type === 'kanban' ? updater(current) : current,
+		);
+	};
+
+	const onUpdateTableView = (
+		updater: (current: TableViewConfig) => TableViewConfig,
+	) => {
+		onUpdateView((current) =>
+			current.type === 'table' ? updater(current) : current,
+		);
+	};
+
 	return (
 		<div className="pk-settings pk-settings-modal">
-			<ViewColumnSettings view={view} onUpdateView={onUpdateView} />
-			<CardFieldsEditor view={view} onUpdateView={onUpdateView} />
+			{isKanbanView(view) ? (
+				<>
+					<ViewColumnSettings view={view} onUpdateView={onUpdateKanbanView} />
+					<CardFieldsEditor view={view} onUpdateView={onUpdateKanbanView} />
+				</>
+			) : isTableView(view) ? (
+				<TableValuesEditor view={view} onUpdateView={onUpdateTableView} />
+			) : null}
 		</div>
 	);
 }
