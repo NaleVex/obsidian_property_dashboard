@@ -1,25 +1,14 @@
-import { setIcon } from 'obsidian';
-import { useEffect, useRef } from 'react';
 import {
-	KanbanViewConfig,
 	CardFieldDef,
+	KanbanViewConfig,
 	addCardFieldToView,
 	removeCardFieldFromView,
 } from '../board/schema';
+import { DisplayFieldRow } from './DisplayFieldRow';
 
 interface CardFieldsEditorProps {
 	view: KanbanViewConfig;
 	onUpdateView: (updater: (current: KanbanViewConfig) => KanbanViewConfig) => void;
-}
-
-function TrashIcon() {
-	const ref = useRef<HTMLSpanElement>(null);
-	useEffect(() => {
-		if (ref.current) {
-			setIcon(ref.current, 'trash');
-		}
-	}, []);
-	return <span ref={ref} className="pk-icon" aria-hidden="true" />;
 }
 
 export function CardFieldsEditor({ view, onUpdateView }: CardFieldsEditorProps) {
@@ -38,67 +27,23 @@ export function CardFieldsEditor({ view, onUpdateView }: CardFieldsEditorProps) 
 				<h3 className="pk-panel-title">Fields on a card</h3>
 			</div>
 			<p className="pk-panel-hint">
-				Properties retrieved from notes and available for card display.
+				Properties from frontmatter or paragraph slices from note body, shown on
+				cards.
 			</p>
 
 			<div className="pk-field-rows">
 				{view.cardFields.map((field) => (
-					<div key={field.id} className="pk-field-row">
-						<select
-							className="pk-select"
-							value={field.type}
-							aria-label="Field type"
-							onChange={() => {
-								/* only property for now */
-							}}
-						>
-							<option value="property">property</option>
-						</select>
-						<input
-							className="pk-input"
-							type="text"
-							value={field.property}
-							placeholder="Property name"
-							aria-label="Property name"
-							onChange={(event) =>
-								updateField(field.id, { property: event.target.value })
-							}
-						/>
-						<input
-							className="pk-input"
-							type="text"
-							value={field.label}
-							placeholder="Display name"
-							aria-label="Display name"
-							onChange={(event) =>
-								updateField(field.id, { label: event.target.value })
-							}
-						/>
-						<label className="pk-toggle" title="display none">
-							<input
-								type="checkbox"
-								checked={field.showIfMissing}
-								onChange={(event) =>
-									updateField(field.id, {
-										showIfMissing: event.target.checked,
-									})
-								}
-							/>
-							<span>display none</span>
-						</label>
-						<button
-							type="button"
-							className="pk-icon-button"
-							aria-label="Delete field"
-							onClick={() =>
-								onUpdateView((current) =>
-									removeCardFieldFromView(current, field.id),
-								)
-							}
-						>
-							<TrashIcon />
-						</button>
-					</div>
+					<DisplayFieldRow
+						key={field.id}
+						field={field}
+						showIfMissing
+						onUpdate={(patch) => updateField(field.id, patch)}
+						onDelete={() =>
+							onUpdateView((current) =>
+								removeCardFieldFromView(current, field.id),
+							)
+						}
+					/>
 				))}
 			</div>
 

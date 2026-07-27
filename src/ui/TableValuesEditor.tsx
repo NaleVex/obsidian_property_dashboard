@@ -1,29 +1,18 @@
-import { setIcon } from 'obsidian';
-import { useEffect, useRef } from 'react';
 import {
+	CardFieldDef,
 	TableViewConfig,
-	TableValueDef,
 	addTableValueToView,
 	removeTableValueFromView,
 } from '../board/schema';
+import { DisplayFieldRow } from './DisplayFieldRow';
 
 interface TableValuesEditorProps {
 	view: TableViewConfig;
 	onUpdateView: (updater: (current: TableViewConfig) => TableViewConfig) => void;
 }
 
-function TrashIcon() {
-	const ref = useRef<HTMLSpanElement>(null);
-	useEffect(() => {
-		if (ref.current) {
-			setIcon(ref.current, 'trash');
-		}
-	}, []);
-	return <span ref={ref} className="pk-icon" aria-hidden="true" />;
-}
-
 export function TableValuesEditor({ view, onUpdateView }: TableValuesEditorProps) {
-	const updateValue = (valueId: string, patch: Partial<TableValueDef>) => {
+	const updateValue = (valueId: string, patch: Partial<CardFieldDef>) => {
 		onUpdateView((current) => ({
 			...current,
 			values: current.values.map((value) =>
@@ -38,55 +27,22 @@ export function TableValuesEditor({ view, onUpdateView }: TableValuesEditorProps
 				<h3 className="pk-panel-title">Values</h3>
 			</div>
 			<p className="pk-panel-hint">
-				Properties retrieved from notes and used as table columns.
+				Properties from frontmatter or paragraph slices from note body, used as
+				table columns.
 			</p>
 
 			<div className="pk-field-rows">
 				{view.values.map((value) => (
-					<div key={value.id} className="pk-field-row">
-						<select
-							className="pk-select"
-							value={value.type}
-							aria-label="Field type"
-							onChange={() => {
-								/* only property for now */
-							}}
-						>
-							<option value="property">property</option>
-						</select>
-						<input
-							className="pk-input"
-							type="text"
-							value={value.property}
-							placeholder="Property name"
-							aria-label="Property name"
-							onChange={(event) =>
-								updateValue(value.id, { property: event.target.value })
-							}
-						/>
-						<input
-							className="pk-input"
-							type="text"
-							value={value.label}
-							placeholder="Display name"
-							aria-label="Display name"
-							onChange={(event) =>
-								updateValue(value.id, { label: event.target.value })
-							}
-						/>
-						<button
-							type="button"
-							className="pk-icon-button"
-							aria-label="Delete value"
-							onClick={() =>
-								onUpdateView((current) =>
-									removeTableValueFromView(current, value.id),
-								)
-							}
-						>
-							<TrashIcon />
-						</button>
-					</div>
+					<DisplayFieldRow
+						key={value.id}
+						field={value}
+						onUpdate={(patch) => updateValue(value.id, patch)}
+						onDelete={() =>
+							onUpdateView((current) =>
+								removeTableValueFromView(current, value.id),
+							)
+						}
+					/>
 				))}
 			</div>
 

@@ -308,6 +308,12 @@
 	width: auto;
 }
 
+.pk-field-row .pk-input-narrow {
+	flex: 0 1 64px;
+	min-width: 56px;
+	max-width: 72px;
+}
+
 .pk-select {
 	padding: 6px 8px;
 	border: 1px solid var(--background-modifier-border);
@@ -325,6 +331,10 @@
 	color: var(--text-muted);
 	white-space: nowrap;
 	cursor: pointer;
+}
+
+.pk-toggle-icon {
+	flex: 0 0 auto;
 }
 
 .pk-cards-info-list {

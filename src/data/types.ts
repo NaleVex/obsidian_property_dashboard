@@ -4,7 +4,7 @@ export interface BoardCard {
 	title: string;
 	columnId: string;
 	rawValue: string;
-	/** Values keyed by CardFieldDef.id; null means property missing. */
+	/** Values keyed by field id; null means source data missing (property or paragraph). */
 	fields: Record<string, string | null>;
 	/** Snapshot of note frontmatter for filter evaluation. */
 	frontmatter: Record<string, unknown>;

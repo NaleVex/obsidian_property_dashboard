@@ -7,6 +7,7 @@ import {
 } from '../board/schema';
 import { fileMatchesLimitTo } from './limitTo';
 import { snapshotFrontmatter, stripFrontmatter } from './noteBody';
+import { extractParagraphSlice } from './paragraphValue';
 import { stringifyPropertyValue } from './propertyValue';
 import { getTriggerFromFrontmatter } from './trigger';
 import {
@@ -108,6 +109,19 @@ export class NoteIndex {
 			this.app.vault,
 			this.app.vault.on('create', (file) => {
 				if (!(file instanceof TFile)) {
+					return;
+				}
+				void this.updateFile(file);
+			}),
+		);
+
+		track(
+			this.app.vault,
+			this.app.vault.on('modify', (file) => {
+				if (!(file instanceof TFile)) {
+					return;
+				}
+				if (this.pendingUpdates.has(file.path)) {
 					return;
 				}
 				void this.updateFile(file);
@@ -270,9 +284,19 @@ export class NoteIndex {
 
 	private readCardFields(
 		frontmatter: Record<string, unknown> | undefined,
+		body: string,
 	): Record<string, string | null> {
 		const fields: Record<string, string | null> = {};
 		for (const def of this.cardFields) {
+			if (def.type === 'paragraph') {
+				fields[def.id] = extractParagraphSlice(
+					body,
+					def.paragraph,
+					def.end,
+				);
+				continue;
+			}
+
 			if (!def.property) {
 				fields[def.id] = null;
 				continue;
@@ -337,7 +361,7 @@ export class NoteIndex {
 			title: file.basename,
 			columnId,
 			rawValue,
-			fields: this.readCardFields(frontmatter),
+			fields: this.readCardFields(frontmatter, body),
 			frontmatter: snapshotFrontmatter(frontmatter),
 			body,
 		};

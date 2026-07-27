@@ -12,7 +12,7 @@ export type LimitTo =
 	| { mode: 'folder'; path: string };
 
 export type BoardViewType = 'kanban' | 'table';
-export type CardFieldType = 'property';
+export type CardFieldType = 'property' | 'paragraph';
 
 export type FilterCombinator = 'and' | 'or' | 'not';
 export type FilterSource = 'property' | 'body';
@@ -71,6 +71,10 @@ export interface CardFieldDef {
 	id: string;
 	type: CardFieldType;
 	property: string;
+	/** 1-based paragraph index; used when type === 'paragraph'. */
+	paragraph: number;
+	/** 1-based inclusive end character; 0 = through end of paragraph. */
+	end: number;
 	label: string;
 	showIfMissing: boolean;
 }
@@ -83,6 +87,8 @@ export interface TableValueDef {
 	id: string;
 	type: CardFieldType;
 	property: string;
+	paragraph: number;
+	end: number;
 	label: string;
 	showIfMissing: boolean;
 }
@@ -306,12 +312,14 @@ function parseFilterOp(raw: unknown): FilterOp {
 }
 
 export function createCardFieldDef(
-	partial: Partial<Omit<CardFieldDef, 'id' | 'type'>> = {},
+	partial: Partial<Omit<CardFieldDef, 'id'>> = {},
 ): CardFieldDef {
 	return {
 		id: createId(),
-		type: 'property',
+		type: partial.type ?? 'property',
 		property: partial.property ?? '',
+		paragraph: partial.paragraph ?? 1,
+		end: partial.end ?? 0,
 		label: partial.label ?? '',
 		showIfMissing: partial.showIfMissing ?? false,
 	};
@@ -376,12 +384,14 @@ export function normalizeCardInfo(
 }
 
 export function createTableValueDef(
-	partial: Partial<Omit<TableValueDef, 'id' | 'type'>> = {},
+	partial: Partial<Omit<TableValueDef, 'id'>> = {},
 ): TableValueDef {
 	return {
 		id: createId(),
-		type: 'property',
+		type: partial.type ?? 'property',
 		property: partial.property ?? '',
+		paragraph: partial.paragraph ?? 1,
+		end: partial.end ?? 0,
 		label: partial.label ?? '',
 		showIfMissing: partial.showIfMissing ?? false,
 	};
@@ -391,15 +401,19 @@ export function getViewPropertyFields(
 	view: BoardViewConfig,
 ): Array<{ property: string; label: string }> {
 	if (isKanbanView(view)) {
-		return view.cardFields.map((field) => ({
-			property: field.property,
-			label: field.label,
-		}));
+		return view.cardFields
+			.filter((field) => field.type === 'property')
+			.map((field) => ({
+				property: field.property,
+				label: field.label,
+			}));
 	}
-	return view.values.map((value) => ({
-		property: value.property,
-		label: value.label,
-	}));
+	return view.values
+		.filter((value) => value.type === 'property')
+		.map((value) => ({
+			property: value.property,
+			label: value.label,
+		}));
 }
 
 /** Ensure Name exists; drop orphan field refs; keep order. */
@@ -539,6 +553,42 @@ function parseLimitTo(raw: unknown): LimitTo {
 	return { mode: 'all' };
 }
 
+function parseNonNegativeInt(raw: unknown, fallback: number): number {
+	if (typeof raw === 'number' && Number.isInteger(raw) && raw >= 0) {
+		return raw;
+	}
+	if (typeof raw === 'string' && raw.trim()) {
+		const value = Number(raw.trim());
+		if (Number.isInteger(value) && value >= 0) {
+			return value;
+		}
+	}
+	return fallback;
+}
+
+function parsePositiveInt(raw: unknown, fallback: number): number {
+	const value = parseNonNegativeInt(raw, fallback);
+	return value >= 1 ? value : fallback;
+}
+
+function parseDisplayFieldDef(raw: Record<string, unknown>): CardFieldDef | null {
+	if (typeof raw.id !== 'string') {
+		return null;
+	}
+
+	const type: CardFieldType = raw.type === 'paragraph' ? 'paragraph' : 'property';
+
+	return {
+		id: raw.id,
+		type,
+		property: typeof raw.property === 'string' ? raw.property : '',
+		paragraph: parsePositiveInt(raw.paragraph, 1),
+		end: parseNonNegativeInt(raw.end, 0),
+		label: typeof raw.label === 'string' ? raw.label : '',
+		showIfMissing: Boolean(raw.showIfMissing),
+	};
+}
+
 function parseCardFields(raw: unknown): CardFieldDef[] {
 	if (!Array.isArray(raw)) {
 		return [];
@@ -546,19 +596,13 @@ function parseCardFields(raw: unknown): CardFieldDef[] {
 
 	const fields: CardFieldDef[] = [];
 	for (const item of raw) {
-		if (!isRecord(item) || typeof item.id !== 'string') {
+		if (!isRecord(item)) {
 			continue;
 		}
-		if (item.type !== 'property') {
-			continue;
+		const field = parseDisplayFieldDef(item);
+		if (field) {
+			fields.push(field);
 		}
-		fields.push({
-			id: item.id,
-			type: 'property',
-			property: typeof item.property === 'string' ? item.property : '',
-			label: typeof item.label === 'string' ? item.label : '',
-			showIfMissing: Boolean(item.showIfMissing),
-		});
 	}
 	return fields;
 }
@@ -768,19 +812,13 @@ function parseTableValues(raw: unknown): TableValueDef[] {
 
 	const values: TableValueDef[] = [];
 	for (const item of raw) {
-		if (!isRecord(item) || typeof item.id !== 'string') {
+		if (!isRecord(item)) {
 			continue;
 		}
-		if (item.type !== 'property') {
-			continue;
+		const field = parseDisplayFieldDef(item);
+		if (field) {
+			values.push(field);
 		}
-		values.push({
-			id: item.id,
-			type: 'property',
-			property: typeof item.property === 'string' ? item.property : '',
-			label: typeof item.label === 'string' ? item.label : '',
-			showIfMissing: Boolean(item.showIfMissing),
-		});
 	}
 	return values;
 }
