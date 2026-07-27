@@ -13,12 +13,13 @@ import { KanbanViewConfig } from '../board/schema';
 import { countCards, filterColumns } from '../data/filterCards';
 import { sortColumns } from '../data/sortCards';
 import { BoardCard as BoardCardType } from '../data/types';
+import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
 import { BoardColumn } from './BoardColumn';
 import { CardDragPreview } from './CardDragPreview';
 import { CardColorsPanel } from './CardColorsPanel';
 import { CardsInfoPanel } from './CardsInfoPanel';
-import { COLOR_PRESETS, HEX_COLOR_RE, pickCustomColor } from './colorPresets';
+import { getColorPresets, HEX_COLOR_RE, pickCustomColor } from './colorPresets';
 import { FilterPanel } from './FilterPanel';
 import { SortPanel } from './SortPanel';
 import { ViewSettingsModal } from './ViewSettingsModal';
@@ -130,11 +131,11 @@ export function KanbanView({ view }: KanbanViewProps) {
 		const current = view.columnColors[columnId];
 
 		menu.addItem((item) => {
-			item.setTitle('Color').setIsLabel(true);
+			item.setTitle(strings.common.color).setIsLabel(true);
 		});
 
 		menu.addItem((item) => {
-			item.setTitle('Default').setIcon('circle-off').onClick(() => {
+			item.setTitle(strings.common.default).setIcon('circle-off').onClick(() => {
 				setColumnColor(columnId, null);
 			});
 			if (!current) {
@@ -142,7 +143,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 			}
 		});
 
-		for (const preset of COLOR_PRESETS) {
+		for (const preset of getColorPresets()) {
 			menu.addItem((item) => {
 				const title = window.document.createDocumentFragment();
 				const swatch = window.document.createElement('span');
@@ -161,7 +162,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 
 		menu.addSeparator();
 		menu.addItem((item) => {
-			item.setTitle('Custom…').setIcon('palette').onClick(() => {
+			item.setTitle(strings.common.customEllipsis).setIcon('palette').onClick(() => {
 				pickCustomColor(
 					current && HEX_COLOR_RE.test(current) ? current : undefined,
 					(hex) => setColumnColor(columnId, hex),
@@ -261,8 +262,8 @@ export function KanbanView({ view }: KanbanViewProps) {
 					<button
 						type="button"
 						className="pk-icon-button"
-						aria-label="View settings"
-						title="View settings"
+						aria-label={strings.kanban.viewSettings}
+						title={strings.kanban.viewSettings}
 						onClick={openViewSettings}
 					>
 						<ToolbarIcon name="settings" />
@@ -274,11 +275,11 @@ export function KanbanView({ view }: KanbanViewProps) {
 								? 'pk-toolbar-button pk-toolbar-button-active'
 								: 'pk-toolbar-button'
 						}
-						aria-label="Cards info"
-						title="Cards info"
+						aria-label={strings.kanban.cardsInfo}
+						title={strings.kanban.cardsInfo}
 						onClick={() => togglePanel('cardsInfo')}
 					>
-						Cards info
+						{strings.kanban.cardsInfo}
 					</button>
 					<button
 						type="button"
@@ -287,11 +288,11 @@ export function KanbanView({ view }: KanbanViewProps) {
 								? 'pk-toolbar-button pk-toolbar-button-active'
 								: 'pk-toolbar-button'
 						}
-						aria-label="Filter"
-						title="Filter"
+						aria-label={strings.kanban.filter}
+						title={strings.kanban.filter}
 						onClick={() => togglePanel('filter')}
 					>
-						Filter
+						{strings.kanban.filter}
 						{hasActiveFilters ? (
 							<span className="pk-toolbar-badge">{view.filters.filter((r) => r.enabled).length}</span>
 						) : null}
@@ -303,11 +304,11 @@ export function KanbanView({ view }: KanbanViewProps) {
 								? 'pk-toolbar-button pk-toolbar-button-active'
 								: 'pk-toolbar-button'
 						}
-						aria-label="Sort"
-						title="Sort"
+						aria-label={strings.kanban.sort}
+						title={strings.kanban.sort}
 						onClick={() => togglePanel('sort')}
 					>
-						Sort
+						{strings.kanban.sort}
 						{hasActiveSorts ? (
 							<span className="pk-toolbar-badge">
 								{view.sorts.filter((r) => r.enabled).length}
@@ -321,11 +322,11 @@ export function KanbanView({ view }: KanbanViewProps) {
 								? 'pk-toolbar-button pk-toolbar-button-active'
 								: 'pk-toolbar-button'
 						}
-						aria-label="Colors"
-						title="Colors"
+						aria-label={strings.kanban.colors}
+						title={strings.kanban.colors}
 						onClick={() => togglePanel('cardColors')}
 					>
-						Colors
+						{strings.kanban.colors}
 						{hasActiveCardColors ? (
 							<span className="pk-toolbar-badge">
 								{view.cardColors.filter((r) => r.enabled).length}
@@ -341,16 +342,16 @@ export function KanbanView({ view }: KanbanViewProps) {
 			{panel === 'cardColors' && <CardColorsPanel view={view} />}
 
 			{state.isLoading ? (
-				<div className="pk-board-loading">Loading board…</div>
+				<div className="pk-board-loading">{strings.board.loading}</div>
 			) : state.cardCount === 0 ? (
 				<div className="pk-board-empty">
-					No notes with the trigger property in scope.
+					{strings.kanban.noNotesInScope}
 				</div>
 			) : (
 				<>
 					{filteredCardCount === 0 && hasActiveFilters && (
 						<div className="pk-board-empty">
-							No cards match the current filters.
+							{strings.kanban.noCardsMatchFilters}
 						</div>
 					)}
 					<DndContext

@@ -25,6 +25,7 @@ import {
 } from '../board/schema';
 import { getPropertyType } from '../data/propertyType';
 import { directionLabelsForType } from '../data/sortCards';
+import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
 
 interface SortPanelProps {
@@ -58,7 +59,7 @@ interface PropertyOption {
 
 function sortPropertyOptions(view: BoardViewConfig): PropertyOption[] {
 	const options: PropertyOption[] = [
-		{ property: SORT_HEADER_NAME_ID, label: 'Header name' },
+		{ property: SORT_HEADER_NAME_ID, label: strings.sort.headerName },
 	];
 	const seen = new Set<string>([SORT_HEADER_NAME_ID]);
 	for (const field of getViewPropertyFields(view)) {
@@ -74,7 +75,7 @@ function sortPropertyOptions(view: BoardViewConfig): PropertyOption[] {
 }
 
 function propertyDisplayValue(property: string): string {
-	return property === SORT_HEADER_NAME_ID ? 'Header name' : property;
+	return property === SORT_HEADER_NAME_ID ? strings.sort.headerName : property;
 }
 
 function SortableSortRow({
@@ -130,7 +131,7 @@ function SortableSortRow({
 			<button
 				type="button"
 				className="pk-drag-handle"
-				aria-label="Reorder sort rule"
+				aria-label={strings.sort.reorder}
 				{...attributes}
 				{...listeners}
 			>
@@ -141,23 +142,25 @@ function SortableSortRow({
 				<input
 					className="pk-input pk-filter-property"
 					type="text"
-					placeholder="Property name"
-					aria-label="Sort property"
+					placeholder={strings.sort.propertyName}
+					aria-label={strings.sort.sortProperty}
 					value={propertyDisplayValue(rule.property)}
 					onChange={(event) => {
 						const next = event.target.value;
 						onChange({
 							...rule,
 							property:
-								next === 'Header name' ? SORT_HEADER_NAME_ID : next,
+								next === strings.sort.headerName
+									? SORT_HEADER_NAME_ID
+									: next,
 						});
 					}}
 				/>
 				<button
 					type="button"
 					className="pk-icon-button pk-filter-property-pick"
-					aria-label="Pick sort property"
-					title="Pick sort property"
+					aria-label={strings.sort.pickProperty}
+					title={strings.sort.pickProperty}
 					onClick={openPropertyMenu}
 				>
 					<ActionIcon name="chevron-down" />
@@ -167,7 +170,7 @@ function SortableSortRow({
 			<select
 				key={propertyType}
 				className="pk-select pk-filter-op"
-				aria-label="Sort direction"
+				aria-label={strings.sort.direction}
 				value={rule.direction}
 				onChange={(event) =>
 					onChange({
@@ -181,7 +184,7 @@ function SortableSortRow({
 			</select>
 
 			<div className="pk-filter-actions">
-				<label className="pk-switch" title="Enable sort rule">
+				<label className="pk-switch" title={strings.sort.enable}>
 					<input
 						type="checkbox"
 						checked={rule.enabled}
@@ -194,8 +197,8 @@ function SortableSortRow({
 				<button
 					type="button"
 					className="pk-icon-button"
-					aria-label="Delete sort rule"
-					title="Delete"
+					aria-label={strings.sort.delete}
+					title={strings.common.delete}
 					onClick={onDelete}
 				>
 					<ActionIcon name="trash" />
@@ -251,24 +254,21 @@ export function SortPanel({ view }: SortPanelProps) {
 	return (
 		<div className="pk-panel">
 			<div className="pk-panel-header">
-				<h3 className="pk-panel-title">Sort</h3>
+				<h3 className="pk-panel-title">{strings.sort.title}</h3>
 				<button
 					type="button"
 					className="pk-icon-button"
-					aria-label="Add sort rule"
-					title="Add sort rule"
+					aria-label={strings.sort.add}
+					title={strings.sort.add}
 					onClick={onAdd}
 				>
 					<ActionIcon name="plus" />
 				</button>
 			</div>
-			<p className="pk-panel-hint">
-				Order cards by these rules. Later rules break ties within earlier ones
-				(top to bottom).
-			</p>
+			<p className="pk-panel-hint">{strings.sort.hint}</p>
 
 			{sorts.length === 0 ? (
-				<p className="pk-panel-hint">No sort rules yet. Click + to add one.</p>
+				<p className="pk-panel-hint">{strings.sort.empty}</p>
 			) : (
 				<DndContext
 					sensors={sensors}

@@ -4,6 +4,7 @@ import {
 	addCardFieldToView,
 	removeCardFieldFromView,
 } from '../board/schema';
+import { strings } from '../i18n';
 import { DisplayFieldRow } from './DisplayFieldRow';
 
 interface CardFieldsEditorProps {
@@ -24,12 +25,9 @@ export function CardFieldsEditor({ view, onUpdateView }: CardFieldsEditorProps) 
 	return (
 		<div className="pk-panel pk-panel-flat">
 			<div className="pk-panel-header">
-				<h3 className="pk-panel-title">Fields on a card</h3>
+				<h3 className="pk-panel-title">{strings.cardFields.title}</h3>
 			</div>
-			<p className="pk-panel-hint">
-				Properties from frontmatter or paragraph slices from note body, shown on
-				cards.
-			</p>
+			<p className="pk-panel-hint">{strings.cardFields.hint}</p>
 
 			<div className="pk-field-rows">
 				{view.cardFields.map((field) => (

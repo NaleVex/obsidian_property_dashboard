@@ -1,6 +1,7 @@
 import { setIcon } from 'obsidian';
 import { useEffect, useRef } from 'react';
 import { CardFieldDef, CardFieldType } from '../board/schema';
+import { strings } from '../i18n';
 
 function TrashIcon() {
 	const ref = useRef<HTMLSpanElement>(null);
@@ -57,13 +58,13 @@ export function DisplayFieldRow({
 			<select
 				className="pk-select"
 				value={field.type}
-				aria-label="Field type"
+				aria-label={strings.displayField.fieldType}
 				onChange={(event) =>
 					handleTypeChange(event.target.value as CardFieldType)
 				}
 			>
-				<option value="property">property</option>
-				<option value="paragraph">paragraph</option>
+				<option value="property">{strings.common.property}</option>
+				<option value="paragraph">{strings.common.paragraph}</option>
 			</select>
 
 			{field.type === 'property' ? (
@@ -71,8 +72,8 @@ export function DisplayFieldRow({
 					className="pk-input"
 					type="text"
 					value={field.property}
-					placeholder="Property name"
-					aria-label="Property name"
+					placeholder={strings.displayField.propertyName}
+					aria-label={strings.displayField.propertyName}
 					onChange={(event) => onUpdate({ property: event.target.value })}
 				/>
 			) : (
@@ -82,9 +83,9 @@ export function DisplayFieldRow({
 						type="number"
 						min={1}
 						value={field.paragraph}
-						placeholder="Para #"
-						aria-label="Paragraph number"
-						title="Paragraph number (1-based)"
+						placeholder={strings.displayField.paraPlaceholder}
+						aria-label={strings.displayField.paragraphNumber}
+						title={strings.displayField.paragraphNumberTitle}
 						onChange={(event) =>
 							onUpdate({
 								paragraph: parseFieldNumber(event.target.value, 1) || 1,
@@ -96,9 +97,9 @@ export function DisplayFieldRow({
 						type="number"
 						min={0}
 						value={field.end}
-						placeholder="End"
-						aria-label="End character"
-						title="End character (1-based; 0 = through end of paragraph)"
+						placeholder={strings.displayField.endPlaceholder}
+						aria-label={strings.displayField.endCharacter}
+						title={strings.displayField.endCharacterTitle}
 						onChange={(event) =>
 							onUpdate({ end: parseFieldNumber(event.target.value, 0) })
 						}
@@ -110,18 +111,18 @@ export function DisplayFieldRow({
 				className="pk-input"
 				type="text"
 				value={field.label}
-				placeholder="Display name"
-				aria-label="Display name"
+				placeholder={strings.displayField.displayName}
+				aria-label={strings.displayField.displayName}
 				onChange={(event) => onUpdate({ label: event.target.value })}
 			/>
 
 			{showIfMissing ? (
-				<label className="pk-toggle pk-toggle-icon" title="display none">
+				<label className="pk-toggle pk-toggle-icon" title={strings.displayField.displayNone}>
 					<input
 						type="checkbox"
 						checked={field.showIfMissing}
-						title="display none"
-						aria-label="display none"
+						title={strings.displayField.displayNone}
+						aria-label={strings.displayField.displayNone}
 						onChange={(event) =>
 							onUpdate({ showIfMissing: event.target.checked })
 						}
@@ -132,7 +133,7 @@ export function DisplayFieldRow({
 			<button
 				type="button"
 				className="pk-icon-button"
-				aria-label="Delete field"
+				aria-label={strings.displayField.deleteField}
 				onClick={onDelete}
 			>
 				<TrashIcon />

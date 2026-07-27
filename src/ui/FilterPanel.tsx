@@ -33,6 +33,7 @@ import {
 	opOptionsForType,
 	valueInputTypeForPropertyType,
 } from '../data/propertyType';
+import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
 
 interface FilterPanelProps {
@@ -105,7 +106,7 @@ function SortableFilterRow({
 		const menu = new Menu();
 		if (propertyOptions.length === 0) {
 			menu.addItem((item) => {
-				item.setTitle('No card fields').setDisabled(true);
+				item.setTitle(strings.filter.noCardFields).setDisabled(true);
 			});
 		} else {
 			for (const option of propertyOptions) {
@@ -136,7 +137,7 @@ function SortableFilterRow({
 			<button
 				type="button"
 				className="pk-drag-handle"
-				aria-label="Reorder filter"
+				aria-label={strings.filter.reorder}
 				{...attributes}
 				{...listeners}
 			>
@@ -145,7 +146,7 @@ function SortableFilterRow({
 
 			<select
 				className="pk-select pk-filter-combinator"
-				aria-label="Combinator"
+				aria-label={strings.filter.combinator}
 				value={rule.combinator}
 				onChange={(event) =>
 					onChange({
@@ -154,14 +155,14 @@ function SortableFilterRow({
 					})
 				}
 			>
-				<option value="and">and</option>
-				<option value="or">or</option>
-				<option value="not">not</option>
+				<option value="and">{strings.common.and}</option>
+				<option value="or">{strings.common.or}</option>
+				<option value="not">{strings.common.not}</option>
 			</select>
 
 			<select
 				className="pk-select pk-filter-source"
-				aria-label="Source"
+				aria-label={strings.filter.source}
 				value={rule.source}
 				onChange={(event) => {
 					const source = event.target.value as FilterSource;
@@ -176,8 +177,8 @@ function SortableFilterRow({
 					});
 				}}
 			>
-				<option value="property">property</option>
-				<option value="body">body</option>
+				<option value="property">{strings.common.property}</option>
+				<option value="body">{strings.common.body}</option>
 			</select>
 
 			{rule.source === 'property' && (
@@ -185,8 +186,8 @@ function SortableFilterRow({
 					<input
 						className="pk-input pk-filter-property"
 						type="text"
-						placeholder="Property name"
-						aria-label="Property name"
+						placeholder={strings.filter.propertyName}
+						aria-label={strings.filter.propertyName}
 						value={rule.property}
 						onChange={(event) => {
 							const property = event.target.value;
@@ -201,8 +202,8 @@ function SortableFilterRow({
 					<button
 						type="button"
 						className="pk-icon-button pk-filter-property-pick"
-						aria-label="Pick from card fields"
-						title="Pick from card fields"
+						aria-label={strings.filter.pickFromCardFields}
+						title={strings.filter.pickFromCardFields}
 						onClick={openPropertyMenu}
 					>
 						<ActionIcon name="chevron-down" />
@@ -213,7 +214,7 @@ function SortableFilterRow({
 			<select
 				key={propertyType}
 				className="pk-select pk-filter-op"
-				aria-label="Operator"
+				aria-label={strings.filter.operator}
 				value={coercedOp}
 				onChange={(event) =>
 					onChange({ ...rule, op: event.target.value as FilterOp })
@@ -230,8 +231,8 @@ function SortableFilterRow({
 				<input
 					className="pk-input pk-filter-value"
 					type={valueInputType}
-					placeholder="Value"
-					aria-label="Comparison value"
+					placeholder={strings.common.value}
+					aria-label={strings.filter.comparisonValue}
 					value={valueForInput}
 					onChange={(event) => {
 						const next =
@@ -244,7 +245,7 @@ function SortableFilterRow({
 			)}
 
 			<div className="pk-filter-actions">
-				<label className="pk-switch" title="Enable filter">
+				<label className="pk-switch" title={strings.filter.enable}>
 					<input
 						type="checkbox"
 						checked={rule.enabled}
@@ -257,8 +258,8 @@ function SortableFilterRow({
 				<button
 					type="button"
 					className="pk-icon-button"
-					aria-label="Copy filter"
-					title="Copy"
+					aria-label={strings.filter.copy}
+					title={strings.common.copy}
 					onClick={onCopy}
 				>
 					<ActionIcon name="copy" />
@@ -266,8 +267,8 @@ function SortableFilterRow({
 				<button
 					type="button"
 					className="pk-icon-button"
-					aria-label="Delete filter"
-					title="Delete"
+					aria-label={strings.filter.delete}
+					title={strings.common.delete}
 					onClick={onDelete}
 				>
 					<ActionIcon name="trash" />
@@ -349,24 +350,21 @@ export function FilterPanel({ view }: FilterPanelProps) {
 	return (
 		<div className="pk-panel">
 			<div className="pk-panel-header">
-				<h3 className="pk-panel-title">Filters</h3>
+				<h3 className="pk-panel-title">{strings.filter.title}</h3>
 				<button
 					type="button"
 					className="pk-icon-button"
-					aria-label="Add filter"
-					title="Add filter"
+					aria-label={strings.filter.add}
+					title={strings.filter.add}
 					onClick={onAdd}
 				>
 					<ActionIcon name="plus" />
 				</button>
 			</div>
-			<p className="pk-panel-hint">
-				Show only cards that match these rules. Use and / or / not to combine
-				lines; following and lines join the current group.
-			</p>
+			<p className="pk-panel-hint">{strings.filter.hint}</p>
 
 			{filters.length === 0 ? (
-				<p className="pk-panel-hint">No filters yet. Click + to add one.</p>
+				<p className="pk-panel-hint">{strings.filter.empty}</p>
 			) : (
 				<DndContext
 					sensors={sensors}

@@ -2,7 +2,7 @@
 	"id": "property-kanban",
 	"name": "Property Kanban",
 	"version": "1.0.0",
-	"minAppVersion": "1.4.4",
+	"minAppVersion": "1.8.7",
 	"description": "Create .board files with property-driven kanban views.",
 	"author": "",
 	"isDesktopOnly": false

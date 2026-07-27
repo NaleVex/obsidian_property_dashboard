@@ -10,6 +10,7 @@ import {
 	serializeBoardDocument,
 } from '../board/schema';
 import { NoteIndex } from '../data/NoteIndex';
+import { format, strings } from '../i18n';
 import { BoardAppContext } from '../ui/BoardAppContext';
 import { BoardShell } from '../ui/BoardShell';
 
@@ -33,7 +34,7 @@ export class BoardView extends TextFileView {
 	}
 
 	getDisplayText(): string {
-		return this.document.name || this.file?.basename || 'Board';
+		return this.document.name || this.file?.basename || strings.board.displayFallback;
 	}
 
 	getIcon(): string {
@@ -59,7 +60,9 @@ export class BoardView extends TextFileView {
 			this.rawFallback = null;
 		} catch (error) {
 			this.parseError =
-				error instanceof Error ? error.message : 'Failed to parse board file';
+				error instanceof Error
+					? error.message
+					: strings.notices.parseBoardFailed;
 			this.rawFallback = data;
 			this.document = parseBoardDocument('', fallbackName);
 		}
@@ -141,7 +144,9 @@ export class BoardView extends TextFileView {
 		if (this.parseError) {
 			this.root.render(
 				<StrictMode>
-					<div className="pk-board-empty">Invalid board file: {this.parseError}</div>
+					<div className="pk-board-empty">
+						{format(strings.board.invalidFile, { reason: this.parseError })}
+					</div>
 				</StrictMode>,
 			);
 			return;

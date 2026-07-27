@@ -1,3 +1,5 @@
+import { strings } from '../i18n';
+
 export const BOARD_VERSION = 1 as const;
 export const UNKNOWN_COLUMN_ID = '__unknown__';
 export const UNKNOWN_COLUMN_LABEL = 'Unknown';
@@ -980,11 +982,11 @@ export function parseBoardDocument(raw: string, fallbackName = 'Untitled'): Boar
 	try {
 		parsed = JSON.parse(trimmed);
 	} catch {
-		throw new Error('Board file is not valid JSON');
+		throw new Error(strings.board.parseNotJson);
 	}
 
 	if (!isRecord(parsed)) {
-		throw new Error('Board file must contain a JSON object');
+		throw new Error(strings.board.parseNotObject);
 	}
 
 	const name =

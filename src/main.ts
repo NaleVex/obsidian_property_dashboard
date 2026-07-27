@@ -3,27 +3,48 @@ import {
 	createDefaultDocument,
 	serializeBoardDocument,
 } from './board/schema';
+import { applyLocale, strings } from './i18n';
+import {
+	DEFAULT_PLUGIN_SETTINGS,
+	normalizePluginSettings,
+	type PluginSettings,
+} from './pluginSettings';
+import { PluginSettingsTab } from './ui/PluginSettingsTab';
 import { BoardView, VIEW_TYPE_BOARD } from './views/BoardView';
 
 export default class PropertyKanbanPlugin extends Plugin {
+	settings: PluginSettings = { ...DEFAULT_PLUGIN_SETTINGS };
+
 	async onload(): Promise<void> {
+		await this.loadSettings();
+		applyLocale(this.settings.language);
+
 		this.registerView(VIEW_TYPE_BOARD, (leaf) => new BoardView(leaf));
 		this.registerExtensions(['board'], VIEW_TYPE_BOARD);
+		this.addSettingTab(new PluginSettingsTab(this.app, this));
 
 		this.addCommand({
 			id: 'create-new-board',
-			name: 'Create new board',
+			name: strings.commands.createBoard,
 			callback: () => {
 				void this.createNewBoard();
 			},
 		});
 
-		this.addRibbonIcon('layout-dashboard', 'Create new board', () => {
+		this.addRibbonIcon('layout-dashboard', strings.commands.createBoard, () => {
 			void this.createNewBoard();
 		});
 	}
 
 	onunload(): void {}
+
+	async loadSettings(): Promise<void> {
+		this.settings = normalizePluginSettings(await this.loadData());
+	}
+
+	async saveSettings(): Promise<void> {
+		await this.saveData(this.settings);
+	}
 
 	private getCreateFolder(): TFolder {
 		const activeFile = this.app.workspace.getActiveFile();
@@ -59,7 +80,9 @@ export default class PropertyKanbanPlugin extends Plugin {
 			await this.app.workspace.getLeaf(true).openFile(file);
 		} catch (error) {
 			const message =
-				error instanceof Error ? error.message : 'Could not create board file';
+				error instanceof Error
+					? error.message
+					: strings.notices.createBoardFailed;
 			new Notice(message);
 		}
 	}

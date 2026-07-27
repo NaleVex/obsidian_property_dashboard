@@ -8,6 +8,7 @@ import {
 	isKanbanView,
 	isTableView,
 } from '../board/schema';
+import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
 import { BoardSettingsModal } from './BoardSettingsModal';
 import { KanbanView } from './KanbanView';
@@ -55,11 +56,11 @@ export function BoardShell() {
 
 	const addView = (type: 'kanban' | 'table') => {
 		void promptForText(app, {
-			title: 'New view',
-			label: 'View name',
+			title: strings.board.newView,
+			label: strings.board.viewName,
 			defaultValue: type === 'kanban' ? 'Kanban' : 'Table',
 			placeholder: type === 'kanban' ? 'Kanban' : 'Table',
-			submitLabel: 'Create',
+			submitLabel: strings.common.create,
 		}).then((name) => {
 			if (name === null) {
 				return;
@@ -81,12 +82,12 @@ export function BoardShell() {
 		event.preventDefault();
 		const menu = new Menu();
 		menu.addItem((item) => {
-			item.setTitle('Kanban').setIcon('columns').onClick(() => {
+			item.setTitle(strings.board.kanban).setIcon('columns').onClick(() => {
 				addView('kanban');
 			});
 		});
 		menu.addItem((item) => {
-			item.setTitle('Table').setIcon('table').onClick(() => {
+			item.setTitle(strings.board.table).setIcon('table').onClick(() => {
 				addView('table');
 			});
 		});
@@ -95,10 +96,10 @@ export function BoardShell() {
 
 	const renameView = (view: BoardViewConfig) => {
 		void promptForText(app, {
-			title: 'Rename view',
-			label: 'View name',
+			title: strings.board.renameView,
+			label: strings.board.viewName,
 			defaultValue: view.name,
-			submitLabel: 'Rename',
+			submitLabel: strings.common.rename,
 		}).then((name) => {
 			if (name === null) {
 				return;
@@ -144,17 +145,17 @@ export function BoardShell() {
 		event.preventDefault();
 		const menu = new Menu();
 		menu.addItem((item) => {
-			item.setTitle('Rename').setIcon('pencil').onClick(() => {
+			item.setTitle(strings.common.rename).setIcon('pencil').onClick(() => {
 				renameView(view);
 			});
 		});
 		menu.addItem((item) => {
-			item.setTitle('Copy').setIcon('copy').onClick(() => {
+			item.setTitle(strings.common.copy).setIcon('copy').onClick(() => {
 				copyView(view);
 			});
 		});
 		menu.addItem((item) => {
-			item.setTitle('Delete').setIcon('trash').onClick(() => {
+			item.setTitle(strings.common.delete).setIcon('trash').onClick(() => {
 				deleteView(view.id);
 			});
 		});
@@ -168,14 +169,14 @@ export function BoardShell() {
 					className="pk-header-title"
 					type="text"
 					value={document.name}
-					aria-label="Board name"
+					aria-label={strings.board.nameAria}
 					onChange={(event) => {
 						const name = event.target.value;
 						updateDocument((doc) => ({ ...doc, name }));
 					}}
 				/>
 
-				<nav className="pk-tabs" aria-label="Board views">
+				<nav className="pk-tabs" aria-label={strings.board.viewsAria}>
 					{document.views.map((view) => (
 						<button
 							key={view.id}
@@ -195,8 +196,8 @@ export function BoardShell() {
 						type="button"
 						className="pk-tab pk-tab-add"
 						onClick={openAddViewMenu}
-						aria-label="Add view"
-						title="Add view"
+						aria-label={strings.board.addView}
+						title={strings.board.addView}
 					>
 						+
 					</button>
@@ -205,8 +206,8 @@ export function BoardShell() {
 				<button
 					type="button"
 					className="pk-icon-button pk-header-settings"
-					aria-label="Board settings"
-					title="Board settings"
+					aria-label={strings.board.settings}
+					title={strings.board.settings}
 					onClick={openBoardSettings}
 				>
 					<Icon name="settings" />
@@ -218,7 +219,7 @@ export function BoardShell() {
 			) : activeView && isTableView(activeView) ? (
 				<TableView view={activeView} />
 			) : (
-				<div className="pk-board-empty">No views yet. Add a view.</div>
+				<div className="pk-board-empty">{strings.board.noViews}</div>
 			)}
 		</div>
 	);

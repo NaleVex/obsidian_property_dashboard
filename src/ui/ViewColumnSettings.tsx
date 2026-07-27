@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { KanbanViewConfig } from '../board/schema';
+import { strings } from '../i18n';
 
 interface ViewColumnSettingsProps {
 	view: KanbanViewConfig;
@@ -57,7 +58,7 @@ export function ViewColumnSettings({
 	return (
 		<>
 			<label className="pk-field">
-				<span className="pk-field-label">Trigger property</span>
+				<span className="pk-field-label">{strings.viewSettings.triggerProperty}</span>
 				<input
 					className="pk-input"
 					type="text"
@@ -68,12 +69,12 @@ export function ViewColumnSettings({
 							triggerProperty: event.target.value,
 						}))
 					}
-					placeholder="status"
+					placeholder={strings.viewSettings.triggerPlaceholder}
 				/>
 			</label>
 
 			<div className="pk-values">
-				<span className="pk-field-label">Values</span>
+				<span className="pk-field-label">{strings.viewSettings.values}</span>
 				<ul className="pk-values-list">
 					{view.values.map((value, index) => (
 						<li key={`${value}-${index}`} className="pk-values-item">
@@ -82,7 +83,7 @@ export function ViewColumnSettings({
 								<button
 									type="button"
 									className="pk-icon-button"
-									aria-label="Move up"
+									aria-label={strings.viewSettings.moveUp}
 									disabled={index === 0}
 									onClick={() => moveValue(index, -1)}
 								>
@@ -91,7 +92,7 @@ export function ViewColumnSettings({
 								<button
 									type="button"
 									className="pk-icon-button"
-									aria-label="Move down"
+									aria-label={strings.viewSettings.moveDown}
 									disabled={index === view.values.length - 1}
 									onClick={() => moveValue(index, 1)}
 								>
@@ -100,7 +101,7 @@ export function ViewColumnSettings({
 								<button
 									type="button"
 									className="pk-icon-button"
-									aria-label="Remove value"
+									aria-label={strings.viewSettings.removeValue}
 									onClick={() => removeValue(index)}
 								>
 									×
@@ -121,10 +122,10 @@ export function ViewColumnSettings({
 								addValue();
 							}
 						}}
-						placeholder="Add value…"
+						placeholder={strings.viewSettings.addValuePlaceholder}
 					/>
 					<button type="button" className="pk-button" onClick={addValue}>
-						Add
+						{strings.common.add}
 					</button>
 				</div>
 			</div>

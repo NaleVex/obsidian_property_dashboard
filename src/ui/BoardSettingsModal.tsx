@@ -3,6 +3,7 @@ import { Root, createRoot } from 'react-dom/client';
 import { StrictMode, useState } from 'react';
 import { BoardDocument, BoardSettings, LimitTo } from '../board/schema';
 import { normalizeFolderPath } from '../data/limitTo';
+import { strings } from '../i18n';
 import { FolderSuggestModal } from './FolderSuggestModal';
 
 export interface BoardSettingsModalHost {
@@ -45,13 +46,13 @@ function BoardSettingsForm({
 
 	const folderLabel =
 		settings.limitTo.mode === 'folder'
-			? settings.limitTo.path || '(none selected)'
+			? settings.limitTo.path || strings.boardSettings.noneSelected
 			: '';
 
 	return (
 		<div className="pk-settings pk-settings-modal">
 			<fieldset className="pk-fieldset">
-				<legend className="pk-field-label">Limit to</legend>
+				<legend className="pk-field-label">{strings.boardSettings.limitTo}</legend>
 				<label className="pk-radio">
 					<input
 						type="radio"
@@ -59,7 +60,7 @@ function BoardSettingsForm({
 						checked={settings.limitTo.mode === 'all'}
 						onChange={() => setLimitTo({ mode: 'all' })}
 					/>
-					<span>All (entire vault)</span>
+					<span>{strings.boardSettings.limitAll}</span>
 				</label>
 				<label className="pk-radio">
 					<input
@@ -68,7 +69,7 @@ function BoardSettingsForm({
 						checked={settings.limitTo.mode === 'siblings'}
 						onChange={() => setLimitTo({ mode: 'siblings' })}
 					/>
-					<span>Siblings (same folder as this board)</span>
+					<span>{strings.boardSettings.limitSiblings}</span>
 				</label>
 				<label className="pk-radio">
 					<input
@@ -85,13 +86,13 @@ function BoardSettingsForm({
 							})
 						}
 					/>
-					<span>Specific folder</span>
+					<span>{strings.boardSettings.limitFolder}</span>
 				</label>
 				{settings.limitTo.mode === 'folder' && (
 					<div className="pk-folder-picker">
 						<span className="pk-folder-path">{folderLabel}</span>
 						<button type="button" className="pk-button" onClick={openFolderPicker}>
-							Choose folder
+							{strings.boardSettings.chooseFolder}
 						</button>
 					</div>
 				)}
@@ -111,7 +112,7 @@ export class BoardSettingsModal extends Modal {
 	}
 
 	onOpen(): void {
-		this.titleEl.setText('Board settings');
+		this.titleEl.setText(strings.boardSettings.title);
 		this.modalEl.addClass('pk-board-settings-modal');
 		this.root = createRoot(this.contentEl);
 		this.root.render(

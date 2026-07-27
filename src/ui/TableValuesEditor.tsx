@@ -4,6 +4,7 @@ import {
 	addTableValueToView,
 	removeTableValueFromView,
 } from '../board/schema';
+import { strings } from '../i18n';
 import { DisplayFieldRow } from './DisplayFieldRow';
 
 interface TableValuesEditorProps {
@@ -24,12 +25,9 @@ export function TableValuesEditor({ view, onUpdateView }: TableValuesEditorProps
 	return (
 		<div className="pk-panel pk-panel-flat">
 			<div className="pk-panel-header">
-				<h3 className="pk-panel-title">Values</h3>
+				<h3 className="pk-panel-title">{strings.tableValues.title}</h3>
 			</div>
-			<p className="pk-panel-hint">
-				Properties from frontmatter or paragraph slices from note body, used as
-				table columns.
-			</p>
+			<p className="pk-panel-hint">{strings.tableValues.hint}</p>
 
 			<div className="pk-field-rows">
 				{view.values.map((value) => (

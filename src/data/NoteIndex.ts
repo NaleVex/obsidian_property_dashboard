@@ -3,8 +3,8 @@ import {
 	CardFieldDef,
 	NoteIndexConfig,
 	UNKNOWN_COLUMN_ID,
-	UNKNOWN_COLUMN_LABEL,
 } from '../board/schema';
+import { strings } from '../i18n';
 import { fileMatchesLimitTo } from './limitTo';
 import { snapshotFrontmatter, stripFrontmatter } from './noteBody';
 import { extractParagraphSlice } from './paragraphValue';
@@ -152,7 +152,7 @@ export class NoteIndex {
 
 		const file = this.app.vault.getAbstractFileByPath(filePath);
 		if (!(file instanceof TFile)) {
-			new Notice('Could not find note to update.');
+			new Notice(strings.notices.noteNotFound);
 			return;
 		}
 
@@ -177,7 +177,9 @@ export class NoteIndex {
 			this.cardIndex.set(filePath, previous);
 			this.setState(this.buildStateFromIndex(false));
 			const message =
-				error instanceof Error ? error.message : 'Failed to update property';
+				error instanceof Error
+					? error.message
+					: strings.notices.updatePropertyFailed;
 			new Notice(message);
 		} finally {
 			window.setTimeout(() => {
@@ -393,7 +395,7 @@ export class NoteIndex {
 
 		columns.push({
 			id: UNKNOWN_COLUMN_ID,
-			title: UNKNOWN_COLUMN_LABEL,
+			title: strings.board.unknownColumn,
 			cards: [],
 		});
 

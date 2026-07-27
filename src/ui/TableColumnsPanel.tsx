@@ -21,6 +21,7 @@ import {
 	TableViewConfig,
 	normalizeTableColumns,
 } from '../board/schema';
+import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
 
 interface TableColumnsPanelProps {
@@ -39,13 +40,13 @@ function GripIcon() {
 
 function itemLabel(view: TableViewConfig, item: TableColumnItem): string {
 	if (item.kind === 'name') {
-		return 'Name';
+		return strings.common.name;
 	}
 	const value = view.values.find((entry) => entry.id === item.fieldId);
 	if (!value) {
-		return 'Field';
+		return strings.common.field;
 	}
-	return value.label.trim() || value.property.trim() || 'Untitled field';
+	return value.label.trim() || value.property.trim() || strings.common.untitledField;
 }
 
 function SortableColumnRow({
@@ -71,7 +72,7 @@ function SortableColumnRow({
 			<button
 				type="button"
 				className="pk-drag-handle"
-				aria-label="Reorder"
+				aria-label={strings.common.reorder}
 				{...attributes}
 				{...listeners}
 			>
@@ -134,11 +135,9 @@ export function TableColumnsPanel({ view }: TableColumnsPanelProps) {
 	return (
 		<div className="pk-panel">
 			<div className="pk-panel-header">
-				<h3 className="pk-panel-title">Columns</h3>
+				<h3 className="pk-panel-title">{strings.tableColumns.title}</h3>
 			</div>
-			<p className="pk-panel-hint">
-				Choose which columns are visible and in what order.
-			</p>
+			<p className="pk-panel-hint">{strings.tableColumns.hint}</p>
 
 			<DndContext
 				sensors={sensors}

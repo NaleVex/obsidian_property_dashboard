@@ -5,6 +5,7 @@ import {
 	normalizeTableColumns,
 } from '../board/schema';
 import { filterCards } from '../data/filterCards';
+import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
 import { CardColorsPanel } from './CardColorsPanel';
 import { FilterPanel } from './FilterPanel';
@@ -108,8 +109,8 @@ export function TableView({ view }: TableViewProps) {
 					<button
 						type="button"
 						className="pk-icon-button"
-						aria-label="View settings"
-						title="View settings"
+						aria-label={strings.table.viewSettings}
+						title={strings.table.viewSettings}
 						onClick={openViewSettings}
 					>
 						<ToolbarIcon name="settings" />
@@ -121,11 +122,11 @@ export function TableView({ view }: TableViewProps) {
 								? 'pk-toolbar-button pk-toolbar-button-active'
 								: 'pk-toolbar-button'
 						}
-						aria-label="Columns"
-						title="Columns"
+						aria-label={strings.table.columns}
+						title={strings.table.columns}
 						onClick={() => togglePanel('columns')}
 					>
-						Columns
+						{strings.table.columns}
 					</button>
 					<button
 						type="button"
@@ -134,11 +135,11 @@ export function TableView({ view }: TableViewProps) {
 								? 'pk-toolbar-button pk-toolbar-button-active'
 								: 'pk-toolbar-button'
 						}
-						aria-label="Filter"
-						title="Filter"
+						aria-label={strings.table.filter}
+						title={strings.table.filter}
 						onClick={() => togglePanel('filter')}
 					>
-						Filter
+						{strings.table.filter}
 						{hasActiveFilters ? (
 							<span className="pk-toolbar-badge">
 								{view.filters.filter((rule) => rule.enabled).length}
@@ -152,11 +153,11 @@ export function TableView({ view }: TableViewProps) {
 								? 'pk-toolbar-button pk-toolbar-button-active'
 								: 'pk-toolbar-button'
 						}
-						aria-label="Colors"
-						title="Colors"
+						aria-label={strings.table.colors}
+						title={strings.table.colors}
 						onClick={() => togglePanel('cardColors')}
 					>
-						Colors
+						{strings.table.colors}
 						{hasActiveCardColors ? (
 							<span className="pk-toolbar-badge">
 								{view.cardColors.filter((rule) => rule.enabled).length}
@@ -171,14 +172,14 @@ export function TableView({ view }: TableViewProps) {
 			{panel === 'cardColors' && <CardColorsPanel view={view} />}
 
 			{state.isLoading ? (
-				<div className="pk-board-loading">Loading board…</div>
+				<div className="pk-board-loading">{strings.board.loading}</div>
 			) : state.cardCount === 0 ? (
-				<div className="pk-board-empty">No notes in scope.</div>
+				<div className="pk-board-empty">{strings.table.noNotesInScope}</div>
 			) : (
 				<div className="pk-table-scroll">
 					{displayCards.length === 0 && hasActiveFilters ? (
 						<div className="pk-board-empty">
-							No rows match the current filters.
+							{strings.table.noRowsMatchFilters}
 						</div>
 					) : (
 						<table className="pk-table">

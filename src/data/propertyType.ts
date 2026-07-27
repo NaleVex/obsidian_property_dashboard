@@ -5,6 +5,7 @@ import {
 	FilterOp,
 	FilterTextOp,
 } from '../board/schema';
+import { strings } from '../i18n';
 
 export type PropertyValueType =
 	| 'text'
@@ -44,28 +45,34 @@ const COMPARE_OPS: FilterNumericOp[] = ['eq', 'neq', 'lte', 'lt', 'gt', 'gte'];
 
 const CHECKBOX_OPS: FilterCheckboxOp[] = ['is_true', 'is_false'];
 
-const TEXT_OP_OPTIONS: Array<{ value: FilterOp; label: string }> = [
-	{ value: 'eq', label: 'is equal' },
-	{ value: 'neq', label: 'is not' },
-	{ value: 'contains', label: 'contains' },
-	{ value: 'not_contains', label: 'not contains' },
-	{ value: 'empty', label: 'is empty' },
-	{ value: 'not_empty', label: 'not empty' },
-];
+function textOpOptions(): Array<{ value: FilterOp; label: string }> {
+	return [
+		{ value: 'eq', label: strings.ops.eq },
+		{ value: 'neq', label: strings.ops.neq },
+		{ value: 'contains', label: strings.ops.contains },
+		{ value: 'not_contains', label: strings.ops.notContains },
+		{ value: 'empty', label: strings.ops.empty },
+		{ value: 'not_empty', label: strings.ops.notEmpty },
+	];
+}
 
-const COMPARE_OP_OPTIONS: Array<{ value: FilterOp; label: string }> = [
-	{ value: 'eq', label: '==' },
-	{ value: 'neq', label: '!=' },
-	{ value: 'lte', label: '<=' },
-	{ value: 'lt', label: '<' },
-	{ value: 'gt', label: '>' },
-	{ value: 'gte', label: '>=' },
-];
+function compareOpOptions(): Array<{ value: FilterOp; label: string }> {
+	return [
+		{ value: 'eq', label: strings.ops.eqSym },
+		{ value: 'neq', label: strings.ops.neqSym },
+		{ value: 'lte', label: strings.ops.lte },
+		{ value: 'lt', label: strings.ops.lt },
+		{ value: 'gt', label: strings.ops.gt },
+		{ value: 'gte', label: strings.ops.gte },
+	];
+}
 
-const CHECKBOX_OP_OPTIONS: Array<{ value: FilterOp; label: string }> = [
-	{ value: 'is_true', label: 'is true' },
-	{ value: 'is_false', label: 'is false' },
-];
+function checkboxOpOptions(): Array<{ value: FilterOp; label: string }> {
+	return [
+		{ value: 'is_true', label: strings.ops.isTrue },
+		{ value: 'is_false', label: strings.ops.isFalse },
+	];
+}
 
 function widgetFromEntry(
 	entry: string | PropertyInfoLike | null | undefined,
@@ -186,11 +193,11 @@ export function opOptionsForType(
 		case 'number':
 		case 'date':
 		case 'datetime':
-			return COMPARE_OP_OPTIONS;
+			return compareOpOptions();
 		case 'checkbox':
-			return CHECKBOX_OP_OPTIONS;
+			return checkboxOpOptions();
 		default:
-			return TEXT_OP_OPTIONS;
+			return textOpOptions();
 	}
 }
 

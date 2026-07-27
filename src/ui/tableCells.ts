@@ -5,6 +5,7 @@ import {
 	normalizeTableColumns,
 } from '../board/schema';
 import { BoardCard } from '../data/types';
+import { strings } from '../i18n';
 
 export const DEFAULT_TABLE_COLUMN_WIDTH = 160;
 
@@ -21,13 +22,13 @@ export function columnHeaderLabel(
 	item: TableColumnItem,
 ): string {
 	if (item.kind === 'name') {
-		return 'Name';
+		return strings.common.name;
 	}
 	const value = view.values.find((entry) => entry.id === item.fieldId);
 	if (!value) {
-		return 'Field';
+		return strings.common.field;
 	}
-	return value.label.trim() || value.property.trim() || 'Untitled field';
+	return value.label.trim() || value.property.trim() || strings.common.untitledField;
 }
 
 export function columnWidth(

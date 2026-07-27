@@ -1,4 +1,5 @@
 import { App, Modal, Setting } from 'obsidian';
+import { strings } from '../i18n';
 
 interface TextPromptModalOptions {
 	title: string;
@@ -28,7 +29,7 @@ export class TextPromptModal extends Modal {
 		contentEl.createEl('h2', { text: this.options.title });
 
 		new Setting(contentEl)
-			.setName(this.options.label ?? 'Name')
+			.setName(this.options.label ?? strings.common.name)
 			.addText((text) => {
 				text
 					.setPlaceholder(this.options.placeholder ?? '')
@@ -47,13 +48,13 @@ export class TextPromptModal extends Modal {
 
 		new Setting(contentEl)
 			.addButton((button) => {
-				button.setButtonText('Cancel').onClick(() => {
+				button.setButtonText(strings.common.cancel).onClick(() => {
 					this.cancel();
 				});
 			})
 			.addButton((button) => {
 				button
-					.setButtonText(this.options.submitLabel ?? 'Save')
+					.setButtonText(this.options.submitLabel ?? strings.common.save)
 					.setCta()
 					.onClick(() => {
 						this.submit();

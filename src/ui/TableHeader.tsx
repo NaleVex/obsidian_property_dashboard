@@ -20,6 +20,7 @@ import {
 	TableViewConfig,
 	normalizeTableColumns,
 } from '../board/schema';
+import { strings } from '../i18n';
 import { columnHeaderLabel, columnWidth } from './tableCells';
 
 const MIN_COLUMN_WIDTH = 60;
@@ -109,7 +110,7 @@ function SortableHeaderCell({
 				<button
 					type="button"
 					className="pk-drag-handle pk-table-header-drag"
-					aria-label="Reorder column"
+					aria-label={strings.table.reorderColumn}
 					{...attributes}
 					{...listeners}
 				>

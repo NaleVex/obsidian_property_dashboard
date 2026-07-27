@@ -33,8 +33,9 @@ import {
 	opOptionsForType,
 	valueInputTypeForPropertyType,
 } from '../data/propertyType';
+import { format, strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
-import { COLOR_PRESETS, pickCustomColor } from './colorPresets';
+import { getColorPresets, pickCustomColor } from './colorPresets';
 
 interface CardColorsPanelProps {
 	view: BoardViewConfig;
@@ -77,13 +78,14 @@ function ColorEffectButton({
 	const openMenu = (event: MouseEvent<HTMLButtonElement>) => {
 		event.preventDefault();
 		const menu = new Menu();
+		const presets = getColorPresets();
 
 		menu.addItem((item) => {
 			item.setTitle(label).setIsLabel(true);
 		});
 
 		menu.addItem((item) => {
-			item.setTitle('Do not color').setIcon('circle-slash').onClick(() => {
+			item.setTitle(strings.cardColors.doNotColor).setIcon('circle-slash').onClick(() => {
 				onChange({ kind: 'none' });
 			});
 			if (effect.kind === 'none') {
@@ -92,7 +94,7 @@ function ColorEffectButton({
 		});
 
 		menu.addItem((item) => {
-			item.setTitle('Reset color').setIcon('circle-off').onClick(() => {
+			item.setTitle(strings.cardColors.resetColor).setIcon('circle-off').onClick(() => {
 				onChange({ kind: 'reset' });
 			});
 			if (effect.kind === 'reset') {
@@ -102,7 +104,7 @@ function ColorEffectButton({
 
 		menu.addSeparator();
 
-		for (const preset of COLOR_PRESETS) {
+		for (const preset of presets) {
 			menu.addItem((item) => {
 				const title = window.document.createDocumentFragment();
 				const swatch = window.document.createElement('span');
@@ -121,7 +123,7 @@ function ColorEffectButton({
 
 		menu.addSeparator();
 		menu.addItem((item) => {
-			item.setTitle('Custom…').setIcon('palette').onClick(() => {
+			item.setTitle(strings.common.customEllipsis).setIcon('palette').onClick(() => {
 				pickCustomColor(
 					effect.kind === 'color' ? effect.hex : undefined,
 					(hex) => onChange({ kind: 'color', hex }),
@@ -129,7 +131,7 @@ function ColorEffectButton({
 			});
 			if (
 				effect.kind === 'color' &&
-				!COLOR_PRESETS.some((preset) => preset.hex === effect.hex)
+				!presets.some((preset) => preset.hex === effect.hex)
 			) {
 				item.setChecked(true);
 			}
@@ -145,10 +147,10 @@ function ColorEffectButton({
 
 	const title =
 		effect.kind === 'color'
-			? `${label}: ${effect.hex}`
+			? format(strings.cardColors.effectHex, { label, hex: effect.hex })
 			: effect.kind === 'reset'
-				? `${label}: reset`
-				: `${label}: do not color`;
+				? format(strings.cardColors.effectReset, { label })
+				: format(strings.cardColors.effectNone, { label });
 
 	return (
 		<button
@@ -209,7 +211,7 @@ function SortableColorRow({
 		const menu = new Menu();
 		if (propertyOptions.length === 0) {
 			menu.addItem((item) => {
-				item.setTitle('No card fields').setDisabled(true);
+				item.setTitle(strings.cardColors.noCardFields).setDisabled(true);
 			});
 		} else {
 			for (const option of propertyOptions) {
@@ -240,7 +242,7 @@ function SortableColorRow({
 			<button
 				type="button"
 				className="pk-drag-handle"
-				aria-label="Reorder color rule"
+				aria-label={strings.cardColors.reorder}
 				{...attributes}
 				{...listeners}
 			>
@@ -249,7 +251,7 @@ function SortableColorRow({
 
 			<select
 				className="pk-select pk-filter-source"
-				aria-label="Source"
+				aria-label={strings.cardColors.source}
 				value={rule.source}
 				onChange={(event) => {
 					const source = event.target.value as FilterSource;
@@ -264,8 +266,8 @@ function SortableColorRow({
 					});
 				}}
 			>
-				<option value="property">property</option>
-				<option value="body">body</option>
+				<option value="property">{strings.common.property}</option>
+				<option value="body">{strings.common.body}</option>
 			</select>
 
 			{rule.source === 'property' && (
@@ -273,8 +275,8 @@ function SortableColorRow({
 					<input
 						className="pk-input pk-filter-property"
 						type="text"
-						placeholder="Property name"
-						aria-label="Property name"
+						placeholder={strings.cardColors.propertyName}
+						aria-label={strings.cardColors.propertyName}
 						value={rule.property}
 						onChange={(event) => {
 							const property = event.target.value;
@@ -289,8 +291,8 @@ function SortableColorRow({
 					<button
 						type="button"
 						className="pk-icon-button pk-filter-property-pick"
-						aria-label="Pick from card fields"
-						title="Pick from card fields"
+						aria-label={strings.cardColors.pickFromCardFields}
+						title={strings.cardColors.pickFromCardFields}
 						onClick={openPropertyMenu}
 					>
 						<ActionIcon name="chevron-down" />
@@ -301,7 +303,7 @@ function SortableColorRow({
 			<select
 				key={propertyType}
 				className="pk-select pk-filter-op"
-				aria-label="Operator"
+				aria-label={strings.cardColors.operator}
 				value={coercedOp}
 				onChange={(event) =>
 					onChange({ ...rule, op: event.target.value as FilterOp })
@@ -318,8 +320,8 @@ function SortableColorRow({
 				<input
 					className="pk-input pk-filter-value"
 					type={valueInputType}
-					placeholder="Value"
-					aria-label="Comparison value"
+					placeholder={strings.common.value}
+					aria-label={strings.cardColors.comparisonValue}
 					value={valueForInput}
 					onChange={(event) => {
 						const next =
@@ -331,21 +333,21 @@ function SortableColorRow({
 				/>
 			)}
 
-			<div className="pk-card-color-effects" aria-label="Color effects">
+			<div className="pk-card-color-effects" aria-label={strings.cardColors.effects}>
 				<ColorEffectButton
-					label="Border color"
+					label={strings.cardColors.borderColor}
 					effect={rule.border}
 					onChange={(border) => onChange({ ...rule, border })}
 				/>
 				<ColorEffectButton
-					label="Background color"
+					label={strings.cardColors.backgroundColor}
 					effect={rule.background}
 					onChange={(background) => onChange({ ...rule, background })}
 				/>
 			</div>
 
 			<div className="pk-filter-actions">
-				<label className="pk-switch" title="Enable color rule">
+				<label className="pk-switch" title={strings.cardColors.enable}>
 					<input
 						type="checkbox"
 						checked={rule.enabled}
@@ -358,8 +360,8 @@ function SortableColorRow({
 				<button
 					type="button"
 					className="pk-icon-button"
-					aria-label="Copy color rule"
-					title="Copy"
+					aria-label={strings.cardColors.copy}
+					title={strings.common.copy}
 					onClick={onCopy}
 				>
 					<ActionIcon name="copy" />
@@ -367,8 +369,8 @@ function SortableColorRow({
 				<button
 					type="button"
 					className="pk-icon-button"
-					aria-label="Delete color rule"
-					title="Delete"
+					aria-label={strings.cardColors.delete}
+					title={strings.common.delete}
 					onClick={onDelete}
 				>
 					<ActionIcon name="trash" />
@@ -450,25 +452,21 @@ export function CardColorsPanel({ view }: CardColorsPanelProps) {
 	return (
 		<div className="pk-panel">
 			<div className="pk-panel-header">
-				<h3 className="pk-panel-title">Card colors</h3>
+				<h3 className="pk-panel-title">{strings.cardColors.title}</h3>
 				<button
 					type="button"
 					className="pk-icon-button"
-					aria-label="Add color rule"
-					title="Add color rule"
+					aria-label={strings.cardColors.add}
+					title={strings.cardColors.add}
 					onClick={onAdd}
 				>
 					<ActionIcon name="plus" />
 				</button>
 			</div>
-			<p className="pk-panel-hint">
-				Color cards that match these rules. Rules apply bottom to top; higher
-				rules overwrite lower ones. Use do not color to leave a channel
-				unchanged, or reset to clear it.
-			</p>
+			<p className="pk-panel-hint">{strings.cardColors.hint}</p>
 
 			{cardColors.length === 0 ? (
-				<p className="pk-panel-hint">No color rules yet. Click + to add one.</p>
+				<p className="pk-panel-hint">{strings.cardColors.empty}</p>
 			) : (
 				<DndContext
 					sensors={sensors}

@@ -4,6 +4,7 @@ import {
 	SortDirection,
 	SortRule,
 } from '../board/schema';
+import { strings } from '../i18n';
 import { getPropertyType, type PropertyValueType } from './propertyType';
 import { stringifyPropertyValue } from './propertyValue';
 import { BoardCard, BoardColumn } from './types';
@@ -241,10 +242,13 @@ export function directionLabelsForType(
 	type: PropertyValueType,
 ): { asc: string; desc: string } {
 	if (type === 'number' || type === 'date' || type === 'datetime') {
-		return { asc: '0 → 9', desc: '9 → 0' };
+		return { asc: strings.sort.asc09, desc: strings.sort.desc90 };
 	}
 	if (type === 'checkbox') {
-		return { asc: 'True → False', desc: 'False → True' };
+		return {
+			asc: strings.sort.ascTrueFalse,
+			desc: strings.sort.descFalseTrue,
+		};
 	}
-	return { asc: 'A → Z', desc: 'Z → A' };
+	return { asc: strings.sort.ascAZ, desc: strings.sort.descZA };
 }

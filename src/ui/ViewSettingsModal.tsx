@@ -2,6 +2,7 @@ import { App, Modal } from 'obsidian';
 import { Root, createRoot } from 'react-dom/client';
 import { StrictMode, useState } from 'react';
 import { BoardDocument, BoardViewConfig, isKanbanView, isTableView, KanbanViewConfig, TableViewConfig } from '../board/schema';
+import { format, strings } from '../i18n';
 import { CardFieldsEditor } from './CardFieldsEditor';
 import { TableValuesEditor } from './TableValuesEditor';
 import { ViewColumnSettings } from './ViewColumnSettings';
@@ -23,7 +24,7 @@ function ViewSettingsForm({
 
 	const view = host.getDocument().views.find((item) => item.id === viewId);
 	if (!view) {
-		return <div className="pk-board-empty">View not found.</div>;
+		return <div className="pk-board-empty">{strings.viewSettings.notFound}</div>;
 	}
 
 	const onUpdateView = (updater: (current: BoardViewConfig) => BoardViewConfig) => {
@@ -80,7 +81,9 @@ export class ViewSettingsModal extends Modal {
 	onOpen(): void {
 		const view = this.host.getDocument().views.find((item) => item.id === this.viewId);
 		this.titleEl.setText(
-			view ? `View settings — ${view.name}` : 'View settings',
+			view
+				? format(strings.viewSettings.titleNamed, { name: view.name })
+				: strings.viewSettings.title,
 		);
 		this.modalEl.addClass('pk-view-settings-modal');
 		this.root = createRoot(this.contentEl);
