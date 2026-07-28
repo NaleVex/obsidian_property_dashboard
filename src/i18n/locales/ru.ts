@@ -27,6 +27,11 @@ export const STRINGS_RU: Strings = {
 		or: 'или',
 		not: 'не',
 	},
+	quickSearch: {
+		placeholder: 'Быстрый поиск',
+		applyWithFilters: 'Применять с фильтрами',
+		clear: 'Очистить поиск',
+	},
 	notices: {
 		createBoardFailed: 'Не удалось создать файл доски',
 		noteNotFound: 'Не удалось найти заметку для обновления.',

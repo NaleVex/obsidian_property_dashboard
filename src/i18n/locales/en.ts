@@ -25,6 +25,11 @@ export const STRINGS_EN = {
 		or: 'or',
 		not: 'not',
 	},
+	quickSearch: {
+		placeholder: 'Quick search',
+		applyWithFilters: 'Apply with filters',
+		clear: 'Clear search',
+	},
 	notices: {
 		createBoardFailed: 'Could not create board file',
 		noteNotFound: 'Could not find note to update.',

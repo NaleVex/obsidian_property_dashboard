@@ -10,7 +10,7 @@ import {
 import { Menu, setIcon } from 'obsidian';
 import { MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { KanbanViewConfig } from '../board/schema';
-import { countCards, filterColumns } from '../data/filterCards';
+import { countCards, filterColumns, filterColumnsByQuickSearch } from '../data/filterCards';
 import { sortColumns } from '../data/sortCards';
 import { BoardCard as BoardCardType } from '../data/types';
 import { strings } from '../i18n';
@@ -21,6 +21,8 @@ import { CardColorsPanel } from './CardColorsPanel';
 import { CardsInfoPanel } from './CardsInfoPanel';
 import { getColorPresets, HEX_COLOR_RE, pickCustomColor } from './colorPresets';
 import { FilterPanel } from './FilterPanel';
+import { QuickSearchBar } from './QuickSearchBar';
+import { useQuickSearch } from './QuickSearchContext';
 import { SortPanel } from './SortPanel';
 import { ViewSettingsModal } from './ViewSettingsModal';
 import { useNoteIndex } from './hooks/useNoteIndex';
@@ -50,6 +52,7 @@ interface KanbanViewProps {
 
 export function KanbanView({ view }: KanbanViewProps) {
 	const { app, document, updateDocument, noteIndex } = useBoardApp();
+	const { query: quickSearch, applyWithFilters } = useQuickSearch();
 	const state = useNoteIndex(noteIndex);
 	const [panel, setPanel] = useState<KanbanPanel | null>(null);
 	const [dragPreview, setDragPreview] = useState<DragPreviewState | null>(null);
@@ -63,10 +66,17 @@ export function KanbanView({ view }: KanbanViewProps) {
 		useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
 	);
 
-	const filteredColumns = useMemo(
-		() => filterColumns(state.columns, view.filters, app),
-		[state.columns, view.filters, app],
-	);
+	const filteredColumns = useMemo(() => {
+		const hasQuickSearch = quickSearch.trim().length > 0;
+		let columns =
+			hasQuickSearch && !applyWithFilters
+				? filterColumnsByQuickSearch(state.columns, quickSearch)
+				: filterColumns(state.columns, view.filters, app);
+		if (hasQuickSearch && applyWithFilters) {
+			columns = filterColumnsByQuickSearch(columns, quickSearch);
+		}
+		return columns;
+	}, [state.columns, view.filters, app, quickSearch, applyWithFilters]);
 
 	const displayColumns = useMemo(
 		() => sortColumns(filteredColumns, view.sorts, app),
@@ -254,6 +264,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 	const hasActiveFilters = view.filters.some((rule) => rule.enabled);
 	const hasActiveSorts = view.sorts.some((rule) => rule.enabled);
 	const hasActiveCardColors = view.cardColors.some((rule) => rule.enabled);
+	const hasQuickSearch = quickSearch.trim().length > 0;
 
 	return (
 		<div className="pk-kanban">
@@ -334,6 +345,7 @@ export function KanbanView({ view }: KanbanViewProps) {
 						) : null}
 					</button>
 				</div>
+				<QuickSearchBar />
 			</div>
 
 			{panel === 'cardsInfo' && <CardsInfoPanel view={view} />}
@@ -349,7 +361,8 @@ export function KanbanView({ view }: KanbanViewProps) {
 				</div>
 			) : (
 				<>
-					{filteredCardCount === 0 && hasActiveFilters && (
+					{filteredCardCount === 0 &&
+						(hasActiveFilters || hasQuickSearch) && (
 						<div className="pk-board-empty">
 							{strings.kanban.noCardsMatchFilters}
 						</div>

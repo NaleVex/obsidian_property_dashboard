@@ -4,11 +4,13 @@ import {
 	TableViewConfig,
 	normalizeTableColumns,
 } from '../board/schema';
-import { filterCards } from '../data/filterCards';
+import { filterCards, filterCardsByQuickSearch } from '../data/filterCards';
 import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
 import { CardColorsPanel } from './CardColorsPanel';
 import { FilterPanel } from './FilterPanel';
+import { QuickSearchBar } from './QuickSearchBar';
+import { useQuickSearch } from './QuickSearchContext';
 import { TableColumnsPanel } from './TableColumnsPanel';
 import { ViewSettingsModal } from './ViewSettingsModal';
 import { TableHeader } from './TableHeader';
@@ -34,6 +36,7 @@ interface TableViewProps {
 
 export function TableView({ view }: TableViewProps) {
 	const { app, document, updateDocument, noteIndex } = useBoardApp();
+	const { query: quickSearch, applyWithFilters } = useQuickSearch();
 	const state = useNoteIndex(noteIndex);
 	const [panel, setPanel] = useState<TablePanel | null>(null);
 
@@ -47,10 +50,17 @@ export function TableView({ view }: TableViewProps) {
 		[view.columns, view.values],
 	);
 
-	const displayCards = useMemo(
-		() => filterCards(state.cards, view.filters, app),
-		[state.cards, view.filters, app],
-	);
+	const displayCards = useMemo(() => {
+		const hasQuickSearch = quickSearch.trim().length > 0;
+		let filtered =
+			hasQuickSearch && !applyWithFilters
+				? filterCardsByQuickSearch(state.cards, quickSearch)
+				: filterCards(state.cards, view.filters, app);
+		if (hasQuickSearch && applyWithFilters) {
+			filtered = filterCardsByQuickSearch(filtered, quickSearch);
+		}
+		return filtered;
+	}, [state.cards, view.filters, app, quickSearch, applyWithFilters]);
 
 	const togglePanel = (id: TablePanel) => {
 		setPanel((current) => (current === id ? null : id));
@@ -101,6 +111,7 @@ export function TableView({ view }: TableViewProps) {
 
 	const hasActiveFilters = view.filters.some((rule) => rule.enabled);
 	const hasActiveCardColors = view.cardColors.some((rule) => rule.enabled);
+	const hasQuickSearch = quickSearch.trim().length > 0;
 
 	return (
 		<div className="pk-table-view">
@@ -165,6 +176,7 @@ export function TableView({ view }: TableViewProps) {
 						) : null}
 					</button>
 				</div>
+				<QuickSearchBar />
 			</div>
 
 			{panel === 'columns' && <TableColumnsPanel view={view} />}
@@ -177,7 +189,8 @@ export function TableView({ view }: TableViewProps) {
 				<div className="pk-board-empty">{strings.table.noNotesInScope}</div>
 			) : (
 				<div className="pk-table-scroll">
-					{displayCards.length === 0 && hasActiveFilters ? (
+					{displayCards.length === 0 &&
+					(hasActiveFilters || hasQuickSearch) ? (
 						<div className="pk-board-empty">
 							{strings.table.noRowsMatchFilters}
 						</div>

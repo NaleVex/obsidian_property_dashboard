@@ -224,6 +224,28 @@
 	gap: 6px;
 }
 
+.pk-quick-search {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	margin-left: 8px;
+}
+
+.pk-quick-search-input {
+	width: 30ch;
+	min-width: 0;
+}
+
+.pk-quick-search-toggle-on {
+	color: var(--text-on-accent);
+	background: var(--interactive-accent);
+}
+
+.pk-quick-search-toggle-on:hover:not(:disabled) {
+	color: var(--text-on-accent);
+	background: var(--interactive-accent-hover);
+}
+
 .pk-toolbar-button {
 	appearance: none;
 	border: none;
@@ -870,6 +892,7 @@
 .pk-table-toolbar {
 	display: flex;
 	align-items: center;
+	gap: 6px;
 	padding: 8px 12px;
 	border-bottom: 1px solid var(--background-modifier-border);
 	flex-shrink: 0;

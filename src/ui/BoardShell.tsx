@@ -12,6 +12,7 @@ import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
 import { BoardSettingsModal } from './BoardSettingsModal';
 import { KanbanView } from './KanbanView';
+import { QuickSearchProvider } from './QuickSearchContext';
 import { TableView } from './TableView';
 import { promptForText } from './TextPromptModal';
 
@@ -163,64 +164,66 @@ export function BoardShell() {
 	};
 
 	return (
-		<div className="pk-shell">
-			<header className="pk-header">
-				<input
-					className="pk-header-title"
-					type="text"
-					value={document.name}
-					aria-label={strings.board.nameAria}
-					onChange={(event) => {
-						const name = event.target.value;
-						updateDocument((doc) => ({ ...doc, name }));
-					}}
-				/>
+		<QuickSearchProvider>
+			<div className="pk-shell">
+				<header className="pk-header">
+					<input
+						className="pk-header-title"
+						type="text"
+						value={document.name}
+						aria-label={strings.board.nameAria}
+						onChange={(event) => {
+							const name = event.target.value;
+							updateDocument((doc) => ({ ...doc, name }));
+						}}
+					/>
 
-				<nav className="pk-tabs" aria-label={strings.board.viewsAria}>
-					{document.views.map((view) => (
+					<nav className="pk-tabs" aria-label={strings.board.viewsAria}>
+						{document.views.map((view) => (
+							<button
+								key={view.id}
+								type="button"
+								className={
+									view.id === activeView?.id
+										? 'pk-tab pk-tab-active'
+										: 'pk-tab'
+								}
+								onClick={() => setActiveView(view.id)}
+								onContextMenu={(event) => openViewMenu(event, view)}
+							>
+								{view.name}
+							</button>
+						))}
 						<button
-							key={view.id}
 							type="button"
-							className={
-								view.id === activeView?.id
-									? 'pk-tab pk-tab-active'
-									: 'pk-tab'
-							}
-							onClick={() => setActiveView(view.id)}
-							onContextMenu={(event) => openViewMenu(event, view)}
+							className="pk-tab pk-tab-add"
+							onClick={openAddViewMenu}
+							aria-label={strings.board.addView}
+							title={strings.board.addView}
 						>
-							{view.name}
+							+
 						</button>
-					))}
+					</nav>
+
 					<button
 						type="button"
-						className="pk-tab pk-tab-add"
-						onClick={openAddViewMenu}
-						aria-label={strings.board.addView}
-						title={strings.board.addView}
+						className="pk-icon-button pk-header-settings"
+						aria-label={strings.board.settings}
+						title={strings.board.settings}
+						onClick={openBoardSettings}
 					>
-						+
+						<Icon name="settings" />
 					</button>
-				</nav>
+				</header>
 
-				<button
-					type="button"
-					className="pk-icon-button pk-header-settings"
-					aria-label={strings.board.settings}
-					title={strings.board.settings}
-					onClick={openBoardSettings}
-				>
-					<Icon name="settings" />
-				</button>
-			</header>
-
-			{activeView && isKanbanView(activeView) ? (
-				<KanbanView view={activeView} />
-			) : activeView && isTableView(activeView) ? (
-				<TableView view={activeView} />
-			) : (
-				<div className="pk-board-empty">{strings.board.noViews}</div>
-			)}
-		</div>
+				{activeView && isKanbanView(activeView) ? (
+					<KanbanView view={activeView} />
+				) : activeView && isTableView(activeView) ? (
+					<TableView view={activeView} />
+				) : (
+					<div className="pk-board-empty">{strings.board.noViews}</div>
+				)}
+			</div>
+		</QuickSearchProvider>
 	);
 }

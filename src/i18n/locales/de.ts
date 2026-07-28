@@ -27,6 +27,11 @@ export const STRINGS_DE: Strings = {
 		or: 'oder',
 		not: 'nicht',
 	},
+	quickSearch: {
+		placeholder: 'Schnellsuche',
+		applyWithFilters: 'Mit Filtern anwenden',
+		clear: 'Suche löschen',
+	},
 	notices: {
 		createBoardFailed: 'Board-Datei konnte nicht erstellt werden',
 		noteNotFound: 'Notiz zum Aktualisieren nicht gefunden.',

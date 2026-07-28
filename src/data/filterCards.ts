@@ -59,15 +59,17 @@ function propertyRaw(
 }
 
 function matchTextOp(haystack: string, op: FilterOp, value: string): boolean {
+	const left = haystack.toLowerCase();
+	const right = value.toLowerCase();
 	switch (op) {
 		case 'eq':
-			return haystack === value;
+			return left === right;
 		case 'neq':
-			return haystack !== value;
+			return left !== right;
 		case 'contains':
-			return haystack.includes(value);
+			return left.includes(right);
 		case 'not_contains':
-			return !haystack.includes(value);
+			return !left.includes(right);
 		case 'empty':
 			return haystack.length === 0;
 		case 'not_empty':
@@ -75,6 +77,52 @@ function matchTextOp(haystack: string, op: FilterOp, value: string): boolean {
 		default:
 			return false;
 	}
+}
+
+function cardQuickSearchHaystack(card: BoardCard): string {
+	const parts: string[] = [card.title, card.body];
+	for (const value of Object.values(card.frontmatter)) {
+		const text = stringifyPropertyValue(value);
+		if (text) {
+			parts.push(text);
+		}
+	}
+	return parts.join('\n');
+}
+
+export function matchesQuickSearch(card: BoardCard, query: string): boolean {
+	const trimmed = query.trim();
+	if (!trimmed) {
+		return true;
+	}
+	return cardQuickSearchHaystack(card)
+		.toLowerCase()
+		.includes(trimmed.toLowerCase());
+}
+
+export function filterCardsByQuickSearch(
+	cards: BoardCard[],
+	query: string,
+): BoardCard[] {
+	const trimmed = query.trim();
+	if (!trimmed) {
+		return cards;
+	}
+	return cards.filter((card) => matchesQuickSearch(card, trimmed));
+}
+
+export function filterColumnsByQuickSearch(
+	columns: BoardColumn[],
+	query: string,
+): BoardColumn[] {
+	const trimmed = query.trim();
+	if (!trimmed) {
+		return columns;
+	}
+	return columns.map((column) => ({
+		...column,
+		cards: column.cards.filter((card) => matchesQuickSearch(card, trimmed)),
+	}));
 }
 
 function compareOrdered(
