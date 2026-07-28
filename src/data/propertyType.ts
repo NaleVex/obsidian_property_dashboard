@@ -4,6 +4,7 @@ import {
 	FilterNumericOp,
 	FilterOp,
 	FilterTextOp,
+	SORT_HEADER_NAME_ID,
 } from '../board/schema';
 import { strings } from '../i18n';
 
@@ -115,6 +116,10 @@ function mapWidgetType(raw: string | null | undefined): PropertyValueType {
 export function getPropertyType(app: App, property: string): PropertyValueType {
 	const key = property.trim();
 	if (!key) {
+		return 'text';
+	}
+
+	if (key === SORT_HEADER_NAME_ID) {
 		return 'text';
 	}
 

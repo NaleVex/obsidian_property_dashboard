@@ -2,15 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { setIcon } from 'obsidian';
 import {
 	TableViewConfig,
+	createId,
 	normalizeTableColumns,
 } from '../board/schema';
 import { filterCards, filterCardsByQuickSearch } from '../data/filterCards';
+import { sortCards } from '../data/sortCards';
 import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
 import { CardColorsPanel } from './CardColorsPanel';
 import { FilterPanel } from './FilterPanel';
 import { QuickSearchBar } from './QuickSearchBar';
 import { useQuickSearch } from './QuickSearchContext';
+import { SortPanel } from './SortPanel';
 import { TableColumnsPanel } from './TableColumnsPanel';
 import { ViewSettingsModal } from './ViewSettingsModal';
 import { TableHeader } from './TableHeader';
@@ -18,7 +21,7 @@ import { TableRow } from './TableRow';
 import { getVisibleTableColumns } from './tableCells';
 import { useNoteIndex } from './hooks/useNoteIndex';
 
-type TablePanel = 'columns' | 'filter' | 'cardColors';
+type TablePanel = 'columns' | 'filter' | 'sort' | 'cardColors';
 
 function ToolbarIcon({ name }: { name: string }) {
 	const ref = useRef<HTMLSpanElement>(null);
@@ -59,8 +62,15 @@ export function TableView({ view }: TableViewProps) {
 		if (hasQuickSearch && applyWithFilters) {
 			filtered = filterCardsByQuickSearch(filtered, quickSearch);
 		}
-		return filtered;
-	}, [state.cards, view.filters, app, quickSearch, applyWithFilters]);
+		return sortCards(filtered, view.sorts, app);
+	}, [
+		state.cards,
+		view.filters,
+		view.sorts,
+		app,
+		quickSearch,
+		applyWithFilters,
+	]);
 
 	const togglePanel = (id: TablePanel) => {
 		setPanel((current) => (current === id ? null : id));
@@ -109,7 +119,48 @@ export function TableView({ view }: TableViewProps) {
 		}));
 	};
 
+	const toggleColumnSort = (property: string) => {
+		updateDocument((doc) => ({
+			...doc,
+			views: doc.views.map((item) => {
+				if (item.id !== view.id || item.type !== 'table') {
+					return item;
+				}
+				const sorts = [...item.sorts];
+				const index = sorts.findIndex((rule) => rule.property === property);
+				const existing = index >= 0 ? sorts[index] : undefined;
+
+				if (!existing || !existing.enabled) {
+					if (index >= 0) {
+						sorts[index] = {
+							...existing!,
+							direction: 'asc',
+							enabled: true,
+						};
+					} else {
+						sorts.push({
+							id: createId(),
+							property,
+							direction: 'asc',
+							enabled: true,
+						});
+					}
+					return { ...item, sorts };
+				}
+
+				if (existing.direction === 'asc') {
+					sorts[index] = { ...existing, direction: 'desc' };
+					return { ...item, sorts };
+				}
+
+				sorts.splice(index, 1);
+				return { ...item, sorts };
+			}),
+		}));
+	};
+
 	const hasActiveFilters = view.filters.some((rule) => rule.enabled);
+	const hasActiveSorts = view.sorts.some((rule) => rule.enabled);
 	const hasActiveCardColors = view.cardColors.some((rule) => rule.enabled);
 	const hasQuickSearch = quickSearch.trim().length > 0;
 
@@ -160,6 +211,24 @@ export function TableView({ view }: TableViewProps) {
 					<button
 						type="button"
 						className={
+							panel === 'sort'
+								? 'pk-toolbar-button pk-toolbar-button-active'
+								: 'pk-toolbar-button'
+						}
+						aria-label={strings.table.sort}
+						title={strings.table.sort}
+						onClick={() => togglePanel('sort')}
+					>
+						{strings.table.sort}
+						{hasActiveSorts ? (
+							<span className="pk-toolbar-badge">
+								{view.sorts.filter((rule) => rule.enabled).length}
+							</span>
+						) : null}
+					</button>
+					<button
+						type="button"
+						className={
 							panel === 'cardColors'
 								? 'pk-toolbar-button pk-toolbar-button-active'
 								: 'pk-toolbar-button'
@@ -181,6 +250,7 @@ export function TableView({ view }: TableViewProps) {
 
 			{panel === 'columns' && <TableColumnsPanel view={view} />}
 			{panel === 'filter' && <FilterPanel view={view} />}
+			{panel === 'sort' && <SortPanel view={view} />}
 			{panel === 'cardColors' && <CardColorsPanel view={view} />}
 
 			{state.isLoading ? (
@@ -201,6 +271,7 @@ export function TableView({ view }: TableViewProps) {
 								columns={visibleColumns}
 								onReorder={patchColumns}
 								onResize={patchColumnWidth}
+								onToggleSort={toggleColumnSort}
 							/>
 							<tbody>
 								{displayCards.map((card) => (

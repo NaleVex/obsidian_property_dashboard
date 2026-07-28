@@ -6,6 +6,7 @@ import {
 	FilterRule,
 	FilterCombinator,
 	RuleCondition,
+	SORT_HEADER_NAME_ID,
 } from '../board/schema';
 import { getPropertyType, coerceOpForType, type PropertyValueType } from './propertyType';
 import { stringifyPropertyValue } from './propertyValue';
@@ -223,6 +224,11 @@ export function matchesFilterRule(
 	if (rule.source === 'body') {
 		const op = coerceOpForType(rule.op, 'text');
 		return matchTextOp(card.body, op, rule.value);
+	}
+
+	if (rule.property === SORT_HEADER_NAME_ID) {
+		const op = coerceOpForType(rule.op, 'text');
+		return matchTextOp(card.title, op, rule.value);
 	}
 
 	const type: PropertyValueType = getPropertyType(app, rule.property);

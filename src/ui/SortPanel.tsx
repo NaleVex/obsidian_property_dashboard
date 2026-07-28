@@ -17,16 +17,21 @@ import { Menu, setIcon } from 'obsidian';
 import { useEffect, useRef, type MouseEvent } from 'react';
 import {
 	BoardViewConfig,
-	SORT_HEADER_NAME_ID,
 	SortDirection,
 	SortRule,
 	createDefaultSortRule,
-	getViewPropertyFields,
 } from '../board/schema';
 import { getPropertyType } from '../data/propertyType';
 import { directionLabelsForType } from '../data/sortCards';
 import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
+import {
+	propertyPickerDisplayValue,
+	propertyPickerMenuTitle,
+	propertyPickerParseInput,
+	viewPropertyPickerOptions,
+	type PropertyOption,
+} from './propertyOptions';
 
 interface SortPanelProps {
 	view: BoardViewConfig;
@@ -52,32 +57,6 @@ function ActionIcon({ name }: { name: string }) {
 	return <span ref={ref} className="pk-icon" aria-hidden="true" />;
 }
 
-interface PropertyOption {
-	property: string;
-	label: string;
-}
-
-function sortPropertyOptions(view: BoardViewConfig): PropertyOption[] {
-	const options: PropertyOption[] = [
-		{ property: SORT_HEADER_NAME_ID, label: strings.sort.headerName },
-	];
-	const seen = new Set<string>([SORT_HEADER_NAME_ID]);
-	for (const field of getViewPropertyFields(view)) {
-		const property = field.property.trim();
-		if (!property || seen.has(property)) {
-			continue;
-		}
-		seen.add(property);
-		const label = field.label.trim() || property;
-		options.push({ property, label });
-	}
-	return options;
-}
-
-function propertyDisplayValue(property: string): string {
-	return property === SORT_HEADER_NAME_ID ? strings.sort.headerName : property;
-}
-
 function SortableSortRow({
 	rule,
 	propertyOptions,
@@ -99,10 +78,7 @@ function SortableSortRow({
 		opacity: isDragging ? 0.6 : 1,
 	};
 
-	const propertyType =
-		rule.property === SORT_HEADER_NAME_ID
-			? 'text'
-			: getPropertyType(app, rule.property);
+	const propertyType = getPropertyType(app, rule.property);
 	const directionLabels = directionLabelsForType(propertyType);
 
 	const openPropertyMenu = (event: MouseEvent<HTMLButtonElement>) => {
@@ -110,12 +86,7 @@ function SortableSortRow({
 		const menu = new Menu();
 		for (const option of propertyOptions) {
 			menu.addItem((item) => {
-				const title =
-					option.property === SORT_HEADER_NAME_ID ||
-					option.label === option.property
-						? option.label
-						: `${option.label} (${option.property})`;
-				item.setTitle(title).onClick(() => {
+				item.setTitle(propertyPickerMenuTitle(option)).onClick(() => {
 					onChange({ ...rule, property: option.property });
 				});
 				if (rule.property === option.property) {
@@ -144,15 +115,11 @@ function SortableSortRow({
 					type="text"
 					placeholder={strings.sort.propertyName}
 					aria-label={strings.sort.sortProperty}
-					value={propertyDisplayValue(rule.property)}
+					value={propertyPickerDisplayValue(rule.property)}
 					onChange={(event) => {
-						const next = event.target.value;
 						onChange({
 							...rule,
-							property:
-								next === strings.sort.headerName
-									? SORT_HEADER_NAME_ID
-									: next,
+							property: propertyPickerParseInput(event.target.value),
 						});
 					}}
 				/>
@@ -215,7 +182,7 @@ export function SortPanel({ view }: SortPanelProps) {
 	);
 
 	const sorts = view.sorts;
-	const propertyOptions = sortPropertyOptions(view);
+	const propertyOptions = viewPropertyPickerOptions(view);
 
 	const patchSorts = (next: SortRule[]) => {
 		updateDocument((doc) => ({

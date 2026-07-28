@@ -23,7 +23,6 @@ import {
 	FilterSource,
 	createDefaultFilterRule,
 	createId,
-	getViewPropertyFields,
 	opNeedsValue,
 } from '../board/schema';
 import {
@@ -35,6 +34,13 @@ import {
 } from '../data/propertyType';
 import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
+import {
+	propertyPickerDisplayValue,
+	propertyPickerMenuTitle,
+	propertyPickerParseInput,
+	viewPropertyPickerOptions,
+	type PropertyOption,
+} from './propertyOptions';
 
 interface FilterPanelProps {
 	view: BoardViewConfig;
@@ -58,11 +64,6 @@ function ActionIcon({ name }: { name: string }) {
 		}
 	}, [name]);
 	return <span ref={ref} className="pk-icon" aria-hidden="true" />;
-}
-
-interface PropertyOption {
-	property: string;
-	label: string;
 }
 
 function SortableFilterRow({
@@ -111,11 +112,7 @@ function SortableFilterRow({
 		} else {
 			for (const option of propertyOptions) {
 				menu.addItem((item) => {
-					const title =
-						option.label === option.property
-							? option.property
-							: `${option.label} (${option.property})`;
-					item.setTitle(title).onClick(() => {
+					item.setTitle(propertyPickerMenuTitle(option)).onClick(() => {
 						const nextType = getPropertyType(app, option.property);
 						onChange({
 							...rule,
@@ -188,9 +185,9 @@ function SortableFilterRow({
 						type="text"
 						placeholder={strings.filter.propertyName}
 						aria-label={strings.filter.propertyName}
-						value={rule.property}
+						value={propertyPickerDisplayValue(rule.property)}
 						onChange={(event) => {
-							const property = event.target.value;
+							const property = propertyPickerParseInput(event.target.value);
 							const nextType = getPropertyType(app, property);
 							onChange({
 								...rule,
@@ -278,21 +275,6 @@ function SortableFilterRow({
 	);
 }
 
-function cardFieldPropertyOptions(view: BoardViewConfig): PropertyOption[] {
-	const seen = new Set<string>();
-	const options: PropertyOption[] = [];
-	for (const field of getViewPropertyFields(view)) {
-		const property = field.property.trim();
-		if (!property || seen.has(property)) {
-			continue;
-		}
-		seen.add(property);
-		const label = field.label.trim() || property;
-		options.push({ property, label });
-	}
-	return options;
-}
-
 export function FilterPanel({ view }: FilterPanelProps) {
 	const { updateDocument } = useBoardApp();
 	const sensors = useSensors(
@@ -300,7 +282,7 @@ export function FilterPanel({ view }: FilterPanelProps) {
 	);
 
 	const filters = view.filters;
-	const propertyOptions = cardFieldPropertyOptions(view);
+	const propertyOptions = viewPropertyPickerOptions(view);
 
 	const patchFilters = (next: FilterRule[]) => {
 		updateDocument((doc) => ({

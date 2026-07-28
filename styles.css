@@ -178,6 +178,11 @@
 	color: var(--text-normal);
 }
 
+.pk-icon-button-active {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+}
+
 .pk-icon-button:disabled {
 	opacity: 0.4;
 	cursor: default;
@@ -935,13 +940,13 @@
 	display: flex;
 	align-items: center;
 	gap: 4px;
-	padding: 8px 10px;
+	padding: 8px 28px 8px 10px;
 	min-height: 36px;
+	cursor: grab;
 }
 
-.pk-table-header-drag {
-	flex-shrink: 0;
-	cursor: grab;
+.pk-table-header-content:active {
+	cursor: grabbing;
 }
 
 .pk-table-header-label {
@@ -952,6 +957,35 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.pk-table-sort-button {
+	appearance: none;
+	position: absolute;
+	top: 50%;
+	right: 8px;
+	transform: translateY(-50%);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: none;
+	border-radius: var(--radius-s);
+	background: transparent;
+	color: var(--text-muted);
+	cursor: pointer;
+	z-index: 1;
+}
+
+.pk-table-sort-button:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.pk-table-sort-button-active {
+	color: var(--interactive-accent);
 }
 
 .pk-table-resize-handle {
