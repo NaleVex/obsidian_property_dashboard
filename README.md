@@ -1,4 +1,4 @@
-# Property Kanban
+# Property Board
 
 An Obsidian plugin that adds a `.board` filetype. Each board file stores its own settings and views, and opens in a dedicated board view.
 
@@ -15,9 +15,9 @@ An Obsidian plugin that adds a `.board` filetype. Each board file stores its own
 
 ### Manual (development)
 
-1. Clone this repository into your vault's `.obsidian/plugins/property-kanban/` folder.
+1. Clone this repository into your vault's `.obsidian/plugins/property-board/` folder.
 2. Run `npm install` and `npm run dev` (or `npm run build` for production).
-3. Enable **Property Kanban** under Settings → Community plugins.
+3. Enable **Property Board** under Settings → Community plugins.
 
 > Always develop plugins in a separate dev vault, not your main vault.
 
@@ -48,7 +48,7 @@ Boards are JSON files with a `.board` extension, for example:
 ```json
 {
   "version": 1,
-  "name": "Untitled",
+  "name": "New Board",
   "settings": {
     "triggerProperty": "status",
     "limitTo": { "mode": "all" },

@@ -1,6 +1,7 @@
 export const STRINGS_EN = {
 	commands: {
 		createBoard: 'Create new board',
+		newBoard: 'New board',
 	},
 	common: {
 		cancel: 'Cancel',
@@ -48,6 +49,7 @@ export const STRINGS_EN = {
 	},
 	board: {
 		displayFallback: 'Board',
+		defaultFileName: 'New Board',
 		unknownColumn: 'Unknown',
 		invalidFile: 'Invalid board file: {reason}',
 		nameAria: 'Board name',

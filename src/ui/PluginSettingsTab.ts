@@ -4,12 +4,12 @@ import {
 	strings,
 	type PluginLanguage,
 } from '../i18n';
-import type PropertyKanbanPlugin from '../main';
+import type PropertyBoardPlugin from '../main';
 
 export class PluginSettingsTab extends PluginSettingTab {
 	constructor(
 		app: App,
-		private plugin: PropertyKanbanPlugin,
+		private plugin: PropertyBoardPlugin,
 	) {
 		super(app, plugin);
 	}

@@ -7,7 +7,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
 
 const DEFAULT_VAULT = '/Users/funapple/Documents/Obsidian/plugin';
-const PLUGIN_ID = 'property-kanban';
+const PLUGIN_ID = 'property-board';
 
 const vaultPath = resolve(process.argv[2] ?? process.env.OBSIDIAN_VAULT ?? DEFAULT_VAULT);
 const pluginDir = join(vaultPath, '.obsidian', 'plugins', PLUGIN_ID);
@@ -47,7 +47,7 @@ function deploy() {
 	}
 
 	console.log(`\nDeployed to ${pluginDir}`);
-	console.log('Enable "Property Kanban" in Obsidian: Settings -> Community plugins');
+	console.log('Enable "Property Board" in Obsidian: Settings -> Community plugins');
 }
 
 const skipBuild = process.argv.includes('--skip-build');

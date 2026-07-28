@@ -3,6 +3,7 @@ import type { Strings } from './en';
 export const STRINGS_RU: Strings = {
 	commands: {
 		createBoard: 'Создать новую доску',
+		newBoard: 'Новая доска',
 	},
 	common: {
 		cancel: 'Отмена',
@@ -50,6 +51,7 @@ export const STRINGS_RU: Strings = {
 	},
 	board: {
 		displayFallback: 'Доска',
+		defaultFileName: 'Новая доска',
 		unknownColumn: 'Неизвестно',
 		invalidFile: 'Некорректный файл доски: {reason}',
 		nameAria: 'Название доски',

@@ -3,6 +3,7 @@ import type { Strings } from './en';
 export const STRINGS_DE: Strings = {
 	commands: {
 		createBoard: 'Neues Board erstellen',
+		newBoard: 'Neues Board',
 	},
 	common: {
 		cancel: 'Abbrechen',
@@ -50,6 +51,7 @@ export const STRINGS_DE: Strings = {
 	},
 	board: {
 		displayFallback: 'Board',
+		defaultFileName: 'Neues Board',
 		unknownColumn: 'Unbekannt',
 		invalidFile: 'Ungültige Board-Datei: {reason}',
 		nameAria: 'Board-Name',

@@ -1,4 +1,4 @@
-import { Notice, Plugin, TFolder } from 'obsidian';
+import { Notice, Plugin, TAbstractFile, TFolder } from 'obsidian';
 import {
 	createDefaultDocument,
 	serializeBoardDocument,
@@ -12,7 +12,7 @@ import {
 import { PluginSettingsTab } from './ui/PluginSettingsTab';
 import { BoardView, VIEW_TYPE_BOARD } from './views/BoardView';
 
-export default class PropertyKanbanPlugin extends Plugin {
+export default class PropertyBoardPlugin extends Plugin {
 	settings: PluginSettings = { ...DEFAULT_PLUGIN_SETTINGS };
 
 	async onload(): Promise<void> {
@@ -34,6 +34,8 @@ export default class PropertyKanbanPlugin extends Plugin {
 		this.addRibbonIcon('layout-dashboard', strings.commands.createBoard, () => {
 			void this.createNewBoard();
 		});
+
+		this.registerFileMenuItems();
 	}
 
 	onunload(): void {}
@@ -44,6 +46,33 @@ export default class PropertyKanbanPlugin extends Plugin {
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
+	}
+
+	private registerFileMenuItems(): void {
+		this.registerEvent(
+			this.app.workspace.on('file-menu', (menu, file) => {
+				const folder = this.resolveBoardCreateFolder(file);
+				if (!folder) {
+					return;
+				}
+
+				menu.addItem((item) => {
+					item
+						.setTitle(strings.commands.newBoard)
+						.setIcon('layout-dashboard')
+						.onClick(() => {
+							void this.createNewBoard(folder);
+						});
+				});
+			}),
+		);
+	}
+
+	private resolveBoardCreateFolder(file: TAbstractFile): TFolder | null {
+		if (file instanceof TFolder) {
+			return file;
+		}
+		return file.parent;
 	}
 
 	private getCreateFolder(): TFolder {
@@ -57,7 +86,7 @@ export default class PropertyKanbanPlugin extends Plugin {
 	private getUniqueBoardPath(folder: TFolder): string {
 		const folderPath = folder.path;
 		const prefix = folderPath ? `${folderPath}/` : '';
-		const base = 'Untitled';
+		const base = strings.board.defaultFileName;
 		let candidate = `${prefix}${base}.board`;
 		let index = 1;
 
@@ -69,11 +98,11 @@ export default class PropertyKanbanPlugin extends Plugin {
 		return candidate;
 	}
 
-	async createNewBoard(): Promise<void> {
+	async createNewBoard(folder?: TFolder): Promise<void> {
 		try {
-			const folder = this.getCreateFolder();
-			const path = this.getUniqueBoardPath(folder);
-			const name = path.split('/').pop()?.replace(/\.board$/, '') ?? 'Untitled';
+			const targetFolder = folder ?? this.getCreateFolder();
+			const path = this.getUniqueBoardPath(targetFolder);
+			const name = path.split('/').pop()?.replace(/\.board$/, '') ?? strings.board.defaultFileName;
 			const content = serializeBoardDocument(createDefaultDocument(name));
 			const file = await this.app.vault.create(path, content);
 

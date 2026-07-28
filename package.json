@@ -1,5 +1,5 @@
 {
-	"name": "property-kanban",
+	"name": "property-board",
 	"version": "1.0.0",
 	"description": "File-based property boards with kanban views for Obsidian",
 	"main": "main.js",

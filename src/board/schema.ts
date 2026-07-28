@@ -255,7 +255,7 @@ export function cloneKanbanView(source: KanbanViewConfig): KanbanViewConfig {
 	return cloneView(source) as KanbanViewConfig;
 }
 
-export function createDefaultDocument(name = 'Untitled'): BoardDocument {
+export function createDefaultDocument(name = 'New Board'): BoardDocument {
 	const view = createDefaultKanbanView('Kanban');
 	return {
 		version: BOARD_VERSION,
@@ -970,7 +970,7 @@ function parseColumnColors(raw: unknown): Record<string, string> {
 }
 
 /** Parse board JSON; always returns a usable document (repairs missing pieces). */
-export function parseBoardDocument(raw: string, fallbackName = 'Untitled'): BoardDocument {
+export function parseBoardDocument(raw: string, fallbackName = 'New Board'): BoardDocument {
 	const defaults = createDefaultDocument(fallbackName);
 	const trimmed = raw.trim();
 

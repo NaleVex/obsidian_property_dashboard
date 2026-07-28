@@ -19,7 +19,7 @@ export const VIEW_TYPE_BOARD = 'property-board-view';
 export class BoardView extends TextFileView {
 	private root: Root | null = null;
 	private reactHost: HTMLElement | null = null;
-	private document: BoardDocument = parseBoardDocument('', 'Untitled');
+	private document: BoardDocument = parseBoardDocument('', strings.board.defaultFileName);
 	private noteIndex: NoteIndex;
 	private parseError: string | null = null;
 	private rawFallback: string | null = null;
@@ -53,7 +53,7 @@ export class BoardView extends TextFileView {
 			this.clear();
 		}
 
-		const fallbackName = this.file?.basename ?? 'Untitled';
+		const fallbackName = this.file?.basename ?? strings.board.defaultFileName;
 		try {
 			this.document = parseBoardDocument(data, fallbackName);
 			this.parseError = null;
@@ -72,7 +72,7 @@ export class BoardView extends TextFileView {
 	}
 
 	clear(): void {
-		this.document = parseBoardDocument('', this.file?.basename ?? 'Untitled');
+		this.document = parseBoardDocument('', this.file?.basename ?? strings.board.defaultFileName);
 		this.parseError = null;
 		this.rawFallback = null;
 	}
