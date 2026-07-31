@@ -89,7 +89,7 @@ function filePropertyLabel(def: FilePropertyDef): string {
 }
 
 /**
- * List properties for the picker: optional header name, file metadata, vault frontmatter.
+ * List properties for the picker: optional header name, vault frontmatter, then file metadata.
  */
 export function listVaultProperties(
 	app: App,
@@ -117,18 +117,6 @@ export function listVaultProperties(
 		});
 	}
 
-	if (!frontmatterOnly) {
-		for (const def of FILE_METADATA_DEFS) {
-			push({
-				property: def.id,
-				label: filePropertyLabel(def),
-				icon: def.icon,
-				kind: 'file',
-				type: def.type,
-			});
-		}
-	}
-
 	const keys = collectFrontmatterKeys(app);
 	const sorted = Array.from(keys.entries()).sort((a, b) =>
 		a[1].localeCompare(b[1], undefined, { sensitivity: 'base' }),
@@ -143,6 +131,18 @@ export function listVaultProperties(
 			kind: 'frontmatter',
 			type: mapWidgetTypeToValueType(widget),
 		});
+	}
+
+	if (!frontmatterOnly) {
+		for (const def of FILE_METADATA_DEFS) {
+			push({
+				property: def.id,
+				label: filePropertyLabel(def),
+				icon: def.icon,
+				kind: 'file',
+				type: def.type,
+			});
+		}
 	}
 
 	return result;

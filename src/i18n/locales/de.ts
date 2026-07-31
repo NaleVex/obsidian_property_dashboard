@@ -98,7 +98,6 @@ export const STRINGS_DE: Strings = {
 		empty: 'Keine passenden Eigenschaften',
 		create: '„{query}“ erstellen',
 		pickProperty: 'Eigenschaft wählen',
-		openList: 'Eigenschaftsliste öffnen',
 	},
 	viewSettings: {
 		title: 'Ansichtseinstellungen',
@@ -106,11 +105,12 @@ export const STRINGS_DE: Strings = {
 		notFound: 'Ansicht nicht gefunden.',
 		triggerProperty: 'Trigger-Eigenschaft',
 		triggerPlaceholder: 'status',
-		values: 'Werte',
-		addValuePlaceholder: 'Wert hinzufügen…',
+		values: 'Spalten',
+		addValuePlaceholder: 'Spalte hinzufügen…',
+		addColumn: 'Spalte hinzufügen',
 		moveUp: 'Nach oben',
 		moveDown: 'Nach unten',
-		removeValue: 'Wert entfernen',
+		removeValue: 'Spalte entfernen',
 	},
 	kanban: {
 		viewSettings: 'Ansichtseinstellungen',

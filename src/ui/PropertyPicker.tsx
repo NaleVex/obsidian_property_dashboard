@@ -17,16 +17,6 @@ import {
 } from '../data/vaultProperties';
 import { format, strings } from '../i18n';
 
-function ActionIcon({ name }: { name: string }) {
-	const ref = useRef<HTMLSpanElement>(null);
-	useEffect(() => {
-		if (ref.current) {
-			setIcon(ref.current, name);
-		}
-	}, [name]);
-	return <span ref={ref} className="pk-icon" aria-hidden="true" />;
-}
-
 function PropertyTypeIcon({ name }: { name: string }) {
 	const ref = useRef<HTMLSpanElement>(null);
 	useEffect(() => {
@@ -97,6 +87,14 @@ function filterOptions(
 	);
 }
 
+function resolvePortalParent(anchor: HTMLElement | null): HTMLElement {
+	const modal = anchor?.closest('.modal');
+	if (modal instanceof HTMLElement) {
+		return modal;
+	}
+	return window.document.body;
+}
+
 export function PropertyPicker({
 	app,
 	value,
@@ -117,6 +115,9 @@ export function PropertyPicker({
 	const [query, setQuery] = useState('');
 	const [activeIndex, setActiveIndex] = useState(0);
 	const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
+	const [portalParent, setPortalParent] = useState<HTMLElement>(
+		() => window.document.body,
+	);
 
 	const canCreate = allowCreate ?? optionsProp === undefined;
 
@@ -183,6 +184,11 @@ export function PropertyPicker({
 				? { bottom: window.innerHeight - rect.top + 4, top: 'auto' }
 				: { top: rect.bottom + 4, bottom: 'auto' }),
 		});
+	};
+
+	const openPicker = () => {
+		setPortalParent(resolvePortalParent(wrapRef.current));
+		setOpen(true);
 	};
 
 	useLayoutEffect(() => {
@@ -292,7 +298,18 @@ export function PropertyPicker({
 		}
 	};
 
+	const onTriggerKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			openPicker();
+		}
+	};
+
 	const shown = displayValue(app, value, optionsProp ?? options);
+
+	const preventBlur = (event: { preventDefault: () => void }) => {
+		event.preventDefault();
+	};
 
 	const dropdown = open
 		? createPortal(
@@ -327,6 +344,7 @@ export function PropertyPicker({
 									.filter(Boolean)
 									.join(' ')}
 								onMouseEnter={() => setActiveIndex(index)}
+								onMouseDown={preventBlur}
 								onClick={() => commit(option.property)}
 							>
 								<PropertyTypeIcon name={option.icon} />
@@ -345,6 +363,7 @@ export function PropertyPicker({
 									.filter(Boolean)
 									.join(' ')}
 								onMouseEnter={() => setActiveIndex(filtered.length)}
+								onMouseDown={preventBlur}
 								onClick={commitCreate}
 							>
 								{createLabel}
@@ -357,7 +376,7 @@ export function PropertyPicker({
 						) : null}
 					</div>
 				</div>,
-				window.document.body,
+				portalParent,
 			)
 		: null;
 
@@ -379,19 +398,11 @@ export function PropertyPicker({
 				placeholder={placeholder ?? strings.propertyPicker.placeholder}
 				value={shown}
 				readOnly
-				onClick={() => setOpen(true)}
-				onFocus={() => setOpen(true)}
-			/>
-			<button
-				type="button"
-				className="pk-icon-button pk-property-picker-toggle"
-				aria-label={strings.propertyPicker.openList}
-				title={strings.propertyPicker.openList}
 				aria-expanded={open}
-				onClick={() => setOpen((current) => !current)}
-			>
-				<ActionIcon name="chevron-down" />
-			</button>
+				aria-haspopup="listbox"
+				onClick={openPicker}
+				onKeyDown={onTriggerKeyDown}
+			/>
 			{dropdown}
 		</div>
 	);

@@ -1,6 +1,6 @@
 import { App, setIcon } from 'obsidian';
 import { useEffect, useRef } from 'react';
-import { CardFieldDef, CardFieldType } from '../board/schema';
+import { CardFieldDef } from '../board/schema';
 import { strings } from '../i18n';
 import { PropertyPicker } from './PropertyPicker';
 
@@ -37,11 +37,8 @@ export function DisplayFieldRow({
 	onDelete,
 	showIfMissing = false,
 }: DisplayFieldRowProps) {
-	const handleTypeChange = (type: CardFieldType) => {
-		if (type === field.type) {
-			return;
-		}
-		if (type === 'paragraph') {
+	const toggleType = () => {
+		if (field.type === 'property') {
 			onUpdate({
 				type: 'paragraph',
 				property: '',
@@ -56,25 +53,27 @@ export function DisplayFieldRow({
 		});
 	};
 
+	const typeLabel =
+		field.type === 'paragraph'
+			? strings.common.paragraph
+			: strings.common.property;
+
 	return (
 		<div className="pk-field-row">
-			<select
-				className="pk-select"
-				value={field.type}
+			<button
+				type="button"
+				className="pk-type-toggle"
 				aria-label={strings.displayField.fieldType}
-				onChange={(event) =>
-					handleTypeChange(event.target.value as CardFieldType)
-				}
+				title={strings.displayField.fieldType}
+				onClick={toggleType}
 			>
-				<option value="property">{strings.common.property}</option>
-				<option value="paragraph">{strings.common.paragraph}</option>
-			</select>
+				{typeLabel}
+			</button>
 
 			{field.type === 'property' ? (
 				<PropertyPicker
 					app={app}
 					value={field.property}
-					fullWidth
 					ariaLabel={strings.displayField.propertyName}
 					placeholder={strings.displayField.propertyName}
 					onChange={(property) => onUpdate({ property })}

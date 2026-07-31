@@ -98,7 +98,6 @@ export const STRINGS_RU: Strings = {
 		empty: 'Нет подходящих свойств',
 		create: 'Создать «{query}»',
 		pickProperty: 'Выбрать свойство',
-		openList: 'Открыть список свойств',
 	},
 	viewSettings: {
 		title: 'Настройки вида',
@@ -106,11 +105,12 @@ export const STRINGS_RU: Strings = {
 		notFound: 'Вид не найден.',
 		triggerProperty: 'Свойство-триггер',
 		triggerPlaceholder: 'status',
-		values: 'Значения',
-		addValuePlaceholder: 'Добавить значение…',
+		values: 'Колонки',
+		addValuePlaceholder: 'Добавить колонку…',
+		addColumn: 'Добавить колонку',
 		moveUp: 'Выше',
 		moveDown: 'Ниже',
-		removeValue: 'Удалить значение',
+		removeValue: 'Удалить колонку',
 	},
 	kanban: {
 		viewSettings: 'Настройки вида',

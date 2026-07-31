@@ -96,7 +96,6 @@ export const STRINGS_EN = {
 		empty: 'No matching properties',
 		create: 'Create “{query}”',
 		pickProperty: 'Pick property',
-		openList: 'Open property list',
 	},
 	viewSettings: {
 		title: 'View settings',
@@ -104,11 +103,12 @@ export const STRINGS_EN = {
 		notFound: 'View not found.',
 		triggerProperty: 'Trigger property',
 		triggerPlaceholder: 'status',
-		values: 'Values',
-		addValuePlaceholder: 'Add value…',
+		values: 'Columns',
+		addValuePlaceholder: 'Add column…',
+		addColumn: 'Add column',
 		moveUp: 'Move up',
 		moveDown: 'Move down',
-		removeValue: 'Remove value',
+		removeValue: 'Remove column',
 	},
 	kanban: {
 		viewSettings: 'View settings',

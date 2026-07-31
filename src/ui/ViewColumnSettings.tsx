@@ -131,7 +131,7 @@ export function ViewColumnSettings({
 						placeholder={strings.viewSettings.addValuePlaceholder}
 					/>
 					<button type="button" className="pk-button" onClick={addValue}>
-						{strings.common.add}
+						{strings.viewSettings.addColumn}
 					</button>
 				</div>
 			</div>
