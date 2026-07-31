@@ -80,6 +80,26 @@ export const STRINGS_RU: Strings = {
 	folderSuggest: {
 		placeholder: 'Выберите папку…',
 	},
+	fileProperties: {
+		name: 'Имя файла',
+		path: 'Путь к файлу',
+		folder: 'Папка',
+		ext: 'Расширение файла',
+		size: 'Размер файла',
+		ctime: 'Время создания',
+		mtime: 'Время изменения',
+		tags: 'Теги файла',
+		links: 'Ссылки файла',
+		backlinks: 'Обратные ссылки',
+		embeds: 'Вложения файла',
+	},
+	propertyPicker: {
+		placeholder: 'Найти или создать…',
+		empty: 'Нет подходящих свойств',
+		create: 'Создать «{query}»',
+		pickProperty: 'Выбрать свойство',
+		openList: 'Открыть список свойств',
+	},
 	viewSettings: {
 		title: 'Настройки вида',
 		titleNamed: 'Настройки вида — {name}',
@@ -115,7 +135,7 @@ export const STRINGS_RU: Strings = {
 		sortDesc: 'Сбросить сортировку',
 	},
 	cardFields: {
-		title: 'Поля на карточке',
+		title: 'Значения',
 		hint: 'Свойства из frontmatter или фрагменты абзацев из тела заметки, отображаемые на карточках.',
 	},
 	tableValues: {

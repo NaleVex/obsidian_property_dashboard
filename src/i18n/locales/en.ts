@@ -78,6 +78,26 @@ export const STRINGS_EN = {
 	folderSuggest: {
 		placeholder: 'Select a folder…',
 	},
+	fileProperties: {
+		name: 'File name',
+		path: 'File path',
+		folder: 'Folder',
+		ext: 'File extension',
+		size: 'File size',
+		ctime: 'Created time',
+		mtime: 'Modified time',
+		tags: 'File tags',
+		links: 'File links',
+		backlinks: 'File backlinks',
+		embeds: 'File embeds',
+	},
+	propertyPicker: {
+		placeholder: 'Find or create…',
+		empty: 'No matching properties',
+		create: 'Create “{query}”',
+		pickProperty: 'Pick property',
+		openList: 'Open property list',
+	},
 	viewSettings: {
 		title: 'View settings',
 		titleNamed: 'View settings — {name}',
@@ -113,7 +133,7 @@ export const STRINGS_EN = {
 		sortDesc: 'Clear sort',
 	},
 	cardFields: {
-		title: 'Fields on a card',
+		title: 'Values',
 		hint: 'Properties from frontmatter or paragraph slices from note body, shown on cards.',
 	},
 	tableValues: {

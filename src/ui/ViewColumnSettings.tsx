@@ -1,13 +1,17 @@
+import { App } from 'obsidian';
 import { useState } from 'react';
 import { KanbanViewConfig } from '../board/schema';
 import { strings } from '../i18n';
+import { PropertyPicker } from './PropertyPicker';
 
 interface ViewColumnSettingsProps {
+	app: App;
 	view: KanbanViewConfig;
 	onUpdateView: (updater: (current: KanbanViewConfig) => KanbanViewConfig) => void;
 }
 
 export function ViewColumnSettings({
+	app,
 	view,
 	onUpdateView,
 }: ViewColumnSettingsProps) {
@@ -59,17 +63,19 @@ export function ViewColumnSettings({
 		<>
 			<label className="pk-field">
 				<span className="pk-field-label">{strings.viewSettings.triggerProperty}</span>
-				<input
-					className="pk-input"
-					type="text"
+				<PropertyPicker
+					app={app}
 					value={view.triggerProperty}
-					onChange={(event) =>
+					frontmatterOnly
+					fullWidth
+					ariaLabel={strings.viewSettings.triggerProperty}
+					placeholder={strings.viewSettings.triggerPlaceholder}
+					onChange={(triggerProperty) =>
 						onUpdateView((current) => ({
 							...current,
-							triggerProperty: event.target.value,
+							triggerProperty,
 						}))
 					}
-					placeholder={strings.viewSettings.triggerPlaceholder}
 				/>
 			</label>
 

@@ -6,6 +6,7 @@ import {
 } from '../board/schema';
 import { strings } from '../i18n';
 import { fileMatchesLimitTo } from './limitTo';
+import { isFileProperty, resolveFilePropertyValue } from './fileProperties';
 import { snapshotFrontmatter, stripFrontmatter } from './noteBody';
 import { extractParagraphSlice } from './paragraphValue';
 import { stringifyPropertyValue } from './propertyValue';
@@ -285,6 +286,7 @@ export class NoteIndex {
 	}
 
 	private readCardFields(
+		file: TFile,
 		frontmatter: Record<string, unknown> | undefined,
 		body: string,
 	): Record<string, string | null> {
@@ -303,6 +305,19 @@ export class NoteIndex {
 				fields[def.id] = null;
 				continue;
 			}
+
+			if (isFileProperty(def.property)) {
+				const resolved = resolveFilePropertyValue(
+					this.app,
+					file.path,
+					def.property,
+				);
+				fields[def.id] = resolved.present
+					? resolved.text || stringifyPropertyValue(resolved.raw)
+					: null;
+				continue;
+			}
+
 			if (
 				!frontmatter ||
 				!Object.prototype.hasOwnProperty.call(frontmatter, def.property)
@@ -363,7 +378,7 @@ export class NoteIndex {
 			title: file.basename,
 			columnId,
 			rawValue,
-			fields: this.readCardFields(frontmatter, body),
+			fields: this.readCardFields(file, frontmatter, body),
 			frontmatter: snapshotFrontmatter(frontmatter),
 			body,
 		};

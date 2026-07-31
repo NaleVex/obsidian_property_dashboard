@@ -13,8 +13,8 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Menu, setIcon } from 'obsidian';
-import { useEffect, useRef, type MouseEvent } from 'react';
+import { setIcon } from 'obsidian';
+import { useEffect, useRef } from 'react';
 import {
 	BoardViewConfig,
 	FilterCombinator,
@@ -34,13 +34,8 @@ import {
 } from '../data/propertyType';
 import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
-import {
-	propertyPickerDisplayValue,
-	propertyPickerMenuTitle,
-	propertyPickerParseInput,
-	viewPropertyPickerOptions,
-	type PropertyOption,
-} from './propertyOptions';
+import { PropertyPicker } from './PropertyPicker';
+import { viewPropertyPickerOptions } from './propertyOptions';
 
 interface FilterPanelProps {
 	view: BoardViewConfig;
@@ -74,7 +69,7 @@ function SortableFilterRow({
 	onDelete,
 }: {
 	rule: FilterRule;
-	propertyOptions: PropertyOption[];
+	propertyOptions: ReturnType<typeof viewPropertyPickerOptions>;
 	onChange: (next: FilterRule) => void;
 	onCopy: () => void;
 	onDelete: () => void;
@@ -101,33 +96,6 @@ function SortableFilterRow({
 		propertyType === 'datetime'
 			? normalizeDatetimeInputValue(rule.value)
 			: rule.value;
-
-	const openPropertyMenu = (event: MouseEvent<HTMLButtonElement>) => {
-		event.preventDefault();
-		const menu = new Menu();
-		if (propertyOptions.length === 0) {
-			menu.addItem((item) => {
-				item.setTitle(strings.filter.noCardFields).setDisabled(true);
-			});
-		} else {
-			for (const option of propertyOptions) {
-				menu.addItem((item) => {
-					item.setTitle(propertyPickerMenuTitle(option)).onClick(() => {
-						const nextType = getPropertyType(app, option.property);
-						onChange({
-							...rule,
-							property: option.property,
-							op: coerceOpForType(rule.op, nextType),
-						});
-					});
-					if (rule.property === option.property) {
-						item.setChecked(true);
-					}
-				});
-			}
-		}
-		menu.showAtMouseEvent(event.nativeEvent);
-	};
 
 	return (
 		<div ref={setNodeRef} style={style} className="pk-filter-row">
@@ -179,33 +147,22 @@ function SortableFilterRow({
 			</select>
 
 			{rule.source === 'property' && (
-				<div className="pk-filter-property-wrap">
-					<input
-						className="pk-input pk-filter-property"
-						type="text"
-						placeholder={strings.filter.propertyName}
-						aria-label={strings.filter.propertyName}
-						value={propertyPickerDisplayValue(rule.property)}
-						onChange={(event) => {
-							const property = propertyPickerParseInput(event.target.value);
-							const nextType = getPropertyType(app, property);
-							onChange({
-								...rule,
-								property,
-								op: coerceOpForType(rule.op, nextType),
-							});
-						}}
-					/>
-					<button
-						type="button"
-						className="pk-icon-button pk-filter-property-pick"
-						aria-label={strings.filter.pickFromCardFields}
-						title={strings.filter.pickFromCardFields}
-						onClick={openPropertyMenu}
-					>
-						<ActionIcon name="chevron-down" />
-					</button>
-				</div>
+				<PropertyPicker
+					app={app}
+					value={rule.property}
+					options={propertyOptions}
+					allowCreate={false}
+					ariaLabel={strings.filter.propertyName}
+					placeholder={strings.filter.propertyName}
+					onChange={(property) => {
+						const nextType = getPropertyType(app, property);
+						onChange({
+							...rule,
+							property,
+							op: coerceOpForType(rule.op, nextType),
+						});
+					}}
+				/>
 			)}
 
 			<select
@@ -276,13 +233,13 @@ function SortableFilterRow({
 }
 
 export function FilterPanel({ view }: FilterPanelProps) {
-	const { updateDocument } = useBoardApp();
+	const { app, updateDocument } = useBoardApp();
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
 	);
 
 	const filters = view.filters;
-	const propertyOptions = viewPropertyPickerOptions(view);
+	const propertyOptions = viewPropertyPickerOptions(app, view);
 
 	const patchFilters = (next: FilterRule[]) => {
 		updateDocument((doc) => ({

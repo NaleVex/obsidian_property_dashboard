@@ -6,7 +6,7 @@ import {
 } from '../board/schema';
 import { strings } from '../i18n';
 import { getPropertyType, type PropertyValueType } from './propertyType';
-import { stringifyPropertyValue } from './propertyValue';
+import { resolvePropertyValue } from './resolveProperty';
 import { BoardCard, BoardColumn } from './types';
 
 function parseFiniteNumber(raw: string): number | null {
@@ -46,45 +46,6 @@ function isCheckboxTrue(raw: unknown): boolean {
 	return false;
 }
 
-function propertyText(
-	frontmatter: Record<string, unknown>,
-	property: string,
-): string {
-	const key = property.trim();
-	if (
-		!key ||
-		!Object.prototype.hasOwnProperty.call(frontmatter, key)
-	) {
-		return '';
-	}
-	return stringifyPropertyValue(frontmatter[key]) ?? '';
-}
-
-function propertyRaw(
-	frontmatter: Record<string, unknown>,
-	property: string,
-): unknown {
-	const key = property.trim();
-	if (
-		!key ||
-		!Object.prototype.hasOwnProperty.call(frontmatter, key)
-	) {
-		return undefined;
-	}
-	return frontmatter[key];
-}
-
-function hasOwnProperty(
-	frontmatter: Record<string, unknown>,
-	property: string,
-): boolean {
-	const key = property.trim();
-	return (
-		key.length > 0 &&
-		Object.prototype.hasOwnProperty.call(frontmatter, key)
-	);
-}
-
 type SortKey =
 	| { kind: 'missing' }
 	| { kind: 'number'; value: number }
@@ -92,29 +53,24 @@ type SortKey =
 	| { kind: 'checkbox'; value: boolean };
 
 function resolveSortKey(
+	app: App,
 	card: BoardCard,
 	property: string,
 	type: PropertyValueType,
 ): SortKey {
-	if (property === SORT_HEADER_NAME_ID) {
-		const title = card.title.trim();
-		if (!title) {
-			return { kind: 'missing' };
-		}
-		return { kind: 'text', value: title };
-	}
+	const resolved = resolvePropertyValue(app, card, property);
 
 	if (type === 'checkbox') {
-		if (!hasOwnProperty(card.frontmatter, property)) {
+		if (!resolved.present) {
 			return { kind: 'missing' };
 		}
 		return {
 			kind: 'checkbox',
-			value: isCheckboxTrue(propertyRaw(card.frontmatter, property)),
+			value: isCheckboxTrue(resolved.raw),
 		};
 	}
 
-	const text = propertyText(card.frontmatter, property);
+	const text = resolved.text;
 	if (!text) {
 		return { kind: 'missing' };
 	}
@@ -198,8 +154,8 @@ function compareCards(
 				? 'text'
 				: getPropertyType(app, property);
 		const result = compareSortKeys(
-			resolveSortKey(a, property, type),
-			resolveSortKey(b, property, type),
+			resolveSortKey(app, a, property, type),
+			resolveSortKey(app, b, property, type),
 			rule.direction,
 		);
 		if (result !== 0) {

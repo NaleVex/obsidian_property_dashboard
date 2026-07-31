@@ -57,11 +57,23 @@ function ViewSettingsForm({
 		<div className="pk-settings pk-settings-modal">
 			{isKanbanView(view) ? (
 				<>
-					<ViewColumnSettings view={view} onUpdateView={onUpdateKanbanView} />
-					<CardFieldsEditor view={view} onUpdateView={onUpdateKanbanView} />
+					<ViewColumnSettings
+						app={host.app}
+						view={view}
+						onUpdateView={onUpdateKanbanView}
+					/>
+					<CardFieldsEditor
+						app={host.app}
+						view={view}
+						onUpdateView={onUpdateKanbanView}
+					/>
 				</>
 			) : isTableView(view) ? (
-				<TableValuesEditor view={view} onUpdateView={onUpdateTableView} />
+				<TableValuesEditor
+					app={host.app}
+					view={view}
+					onUpdateView={onUpdateTableView}
+				/>
 			) : null}
 		</div>
 	);

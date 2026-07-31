@@ -13,8 +13,8 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Menu, setIcon } from 'obsidian';
-import { useEffect, useRef, type MouseEvent } from 'react';
+import { setIcon } from 'obsidian';
+import { useEffect, useRef } from 'react';
 import {
 	BoardViewConfig,
 	SortDirection,
@@ -25,13 +25,8 @@ import { getPropertyType } from '../data/propertyType';
 import { directionLabelsForType } from '../data/sortCards';
 import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
-import {
-	propertyPickerDisplayValue,
-	propertyPickerMenuTitle,
-	propertyPickerParseInput,
-	viewPropertyPickerOptions,
-	type PropertyOption,
-} from './propertyOptions';
+import { PropertyPicker } from './PropertyPicker';
+import { viewPropertyPickerOptions } from './propertyOptions';
 
 interface SortPanelProps {
 	view: BoardViewConfig;
@@ -64,7 +59,7 @@ function SortableSortRow({
 	onDelete,
 }: {
 	rule: SortRule;
-	propertyOptions: PropertyOption[];
+	propertyOptions: ReturnType<typeof viewPropertyPickerOptions>;
 	onChange: (next: SortRule) => void;
 	onDelete: () => void;
 }) {
@@ -81,22 +76,6 @@ function SortableSortRow({
 	const propertyType = getPropertyType(app, rule.property);
 	const directionLabels = directionLabelsForType(propertyType);
 
-	const openPropertyMenu = (event: MouseEvent<HTMLButtonElement>) => {
-		event.preventDefault();
-		const menu = new Menu();
-		for (const option of propertyOptions) {
-			menu.addItem((item) => {
-				item.setTitle(propertyPickerMenuTitle(option)).onClick(() => {
-					onChange({ ...rule, property: option.property });
-				});
-				if (rule.property === option.property) {
-					item.setChecked(true);
-				}
-			});
-		}
-		menu.showAtMouseEvent(event.nativeEvent);
-	};
-
 	return (
 		<div ref={setNodeRef} style={style} className="pk-filter-row">
 			<button
@@ -109,30 +88,15 @@ function SortableSortRow({
 				<GripIcon />
 			</button>
 
-			<div className="pk-filter-property-wrap">
-				<input
-					className="pk-input pk-filter-property"
-					type="text"
-					placeholder={strings.sort.propertyName}
-					aria-label={strings.sort.sortProperty}
-					value={propertyPickerDisplayValue(rule.property)}
-					onChange={(event) => {
-						onChange({
-							...rule,
-							property: propertyPickerParseInput(event.target.value),
-						});
-					}}
-				/>
-				<button
-					type="button"
-					className="pk-icon-button pk-filter-property-pick"
-					aria-label={strings.sort.pickProperty}
-					title={strings.sort.pickProperty}
-					onClick={openPropertyMenu}
-				>
-					<ActionIcon name="chevron-down" />
-				</button>
-			</div>
+			<PropertyPicker
+				app={app}
+				value={rule.property}
+				options={propertyOptions}
+				allowCreate={false}
+				ariaLabel={strings.sort.sortProperty}
+				placeholder={strings.sort.propertyName}
+				onChange={(property) => onChange({ ...rule, property })}
+			/>
 
 			<select
 				key={propertyType}
@@ -176,13 +140,13 @@ function SortableSortRow({
 }
 
 export function SortPanel({ view }: SortPanelProps) {
-	const { updateDocument } = useBoardApp();
+	const { app, updateDocument } = useBoardApp();
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
 	);
 
 	const sorts = view.sorts;
-	const propertyOptions = viewPropertyPickerOptions(view);
+	const propertyOptions = viewPropertyPickerOptions(app, view);
 
 	const patchSorts = (next: SortRule[]) => {
 		updateDocument((doc) => ({

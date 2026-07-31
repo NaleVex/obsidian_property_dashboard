@@ -7,6 +7,7 @@ import {
 	SORT_HEADER_NAME_ID,
 } from '../board/schema';
 import { strings } from '../i18n';
+import { getFilePropertyType, isFileProperty } from './fileProperties';
 
 export type PropertyValueType =
 	| 'text'
@@ -15,22 +16,123 @@ export type PropertyValueType =
 	| 'datetime'
 	| 'checkbox';
 
-interface PropertyInfoLike {
+export interface PropertyInfoLike {
 	/** Current Obsidian: widget type id (e.g. "number"). */
 	widget?: string;
 	/** Older Obsidian / types.json-shaped entries. */
 	type?: string;
+	name?: string;
 }
 
-interface MetadataTypeManagerLike {
+export interface PropertyWidgetLike {
+	icon?: string;
+	type?: string;
+}
+
+export interface MetadataTypeManagerLike {
 	/** Current Obsidian. */
 	getAssignedWidget?: (property: string) => string | null | undefined;
 	/** Legacy Obsidian. */
 	getAssignedType?: (property: string) => string | null | undefined;
 	getPropertyInfo?: (property: string) => PropertyInfoLike | null | undefined;
+	getAllProperties?: () => Record<string, PropertyInfoLike | undefined>;
 	properties?: Record<string, PropertyInfoLike | undefined>;
 	assignedWidgets?: Record<string, PropertyInfoLike | undefined>;
 	types?: Record<string, string | PropertyInfoLike | undefined>;
+	registeredTypeWidgets?: Record<string, PropertyWidgetLike | undefined>;
+}
+
+export function getMetadataTypeManager(
+	app: App,
+): MetadataTypeManagerLike | undefined {
+	return (app as App & { metadataTypeManager?: MetadataTypeManagerLike })
+		.metadataTypeManager;
+}
+
+const DEFAULT_PROPERTY_ICON = 'lucide-text';
+
+const WIDGET_ICON_FALLBACKS: Record<string, string> = {
+	text: DEFAULT_PROPERTY_ICON,
+	number: 'binary',
+	date: 'calendar',
+	datetime: 'calendar-clock',
+	checkbox: 'check-square',
+	aliases: 'forward',
+	tags: 'tags',
+	multitext: 'list',
+};
+
+/** Lucide icon name for an Obsidian property widget type. */
+export function iconForWidgetType(
+	app: App,
+	widgetType: string | null | undefined,
+): string {
+	const raw = widgetType?.trim();
+	if (!raw) {
+		return DEFAULT_PROPERTY_ICON;
+	}
+	const manager = getMetadataTypeManager(app);
+	const fromWidget = manager?.registeredTypeWidgets?.[raw]?.icon?.trim();
+	if (fromWidget) {
+		return fromWidget;
+	}
+	return WIDGET_ICON_FALLBACKS[raw] ?? DEFAULT_PROPERTY_ICON;
+}
+
+/** Resolve widget type id string for a frontmatter property (not file.*). */
+export function getPropertyWidgetType(
+	app: App,
+	property: string,
+): string | null {
+	const key = property.trim();
+	if (!key || key === SORT_HEADER_NAME_ID || isFileProperty(key)) {
+		return null;
+	}
+
+	const manager = getMetadataTypeManager(app);
+	if (!manager) {
+		return null;
+	}
+
+	const normalized = key.toLowerCase();
+	const candidates = normalized === key ? [normalized] : [normalized, key];
+
+	for (const candidate of candidates) {
+		const assigned =
+			manager.getAssignedWidget?.(candidate) ??
+			manager.getAssignedType?.(candidate);
+		if (assigned) {
+			return assigned.trim();
+		}
+	}
+
+	for (const candidate of candidates) {
+		const fromAssignedWidgets = widgetFromEntry(
+			manager.assignedWidgets?.[candidate],
+		);
+		if (fromAssignedWidgets) {
+			return fromAssignedWidgets;
+		}
+
+		const fromInfo = widgetFromEntry(
+			manager.getPropertyInfo?.(candidate) ?? null,
+		);
+		if (fromInfo) {
+			return fromInfo;
+		}
+
+		const fromProperties = widgetFromEntry(manager.properties?.[candidate]);
+		if (fromProperties) {
+			return fromProperties;
+		}
+
+		const fromTypes = widgetFromEntry(manager.types?.[candidate]);
+		if (fromTypes) {
+			return fromTypes;
+		}
+	}
+
+	return null;
 }
 
 const TEXT_OPS: FilterTextOp[] = [
@@ -93,7 +195,9 @@ function widgetFromEntry(
 	return null;
 }
 
-function mapWidgetType(raw: string | null | undefined): PropertyValueType {
+export function mapWidgetTypeToValueType(
+	raw: string | null | undefined,
+): PropertyValueType {
 	switch (raw) {
 		case 'number':
 			return 'number';
@@ -109,65 +213,33 @@ function mapWidgetType(raw: string | null | undefined): PropertyValueType {
 }
 
 /**
- * Resolve Obsidian vault property widget type for a frontmatter key.
- * Current Obsidian uses getAssignedWidget / info.widget; older builds used
- * getAssignedType / info.type. Property keys are lowercased in the registry.
+ * Resolve property value type for filter/sort UI and evaluation.
+ * Handles header name, file.* metadata, and Obsidian frontmatter widgets.
  */
 export function getPropertyType(app: App, property: string): PropertyValueType {
 	const key = property.trim();
-	if (!key) {
+	if (!key || key === SORT_HEADER_NAME_ID) {
 		return 'text';
 	}
 
+	const fileType = getFilePropertyType(key);
+	if (fileType) {
+		return fileType;
+	}
+
+	return mapWidgetTypeToValueType(getPropertyWidgetType(app, key));
+}
+
+/** Icon for a property id (frontmatter widget, file metadata, or header). */
+export function iconForProperty(app: App, property: string): string {
+	const key = property.trim();
 	if (key === SORT_HEADER_NAME_ID) {
-		return 'text';
+		return 'type';
 	}
-
-	const manager = (app as App & { metadataTypeManager?: MetadataTypeManagerLike })
-		.metadataTypeManager;
-	if (!manager) {
-		return 'text';
+	if (isFileProperty(key)) {
+		return 'info';
 	}
-
-	const normalized = key.toLowerCase();
-	const candidates = normalized === key ? [normalized] : [normalized, key];
-
-	for (const candidate of candidates) {
-		const assigned =
-			manager.getAssignedWidget?.(candidate) ??
-			manager.getAssignedType?.(candidate);
-		if (assigned) {
-			return mapWidgetType(assigned);
-		}
-	}
-
-	for (const candidate of candidates) {
-		const fromAssignedWidgets = widgetFromEntry(
-			manager.assignedWidgets?.[candidate],
-		);
-		if (fromAssignedWidgets) {
-			return mapWidgetType(fromAssignedWidgets);
-		}
-
-		const fromInfo = widgetFromEntry(
-			manager.getPropertyInfo?.(candidate) ?? null,
-		);
-		if (fromInfo) {
-			return mapWidgetType(fromInfo);
-		}
-
-		const fromProperties = widgetFromEntry(manager.properties?.[candidate]);
-		if (fromProperties) {
-			return mapWidgetType(fromProperties);
-		}
-
-		const fromTypes = widgetFromEntry(manager.types?.[candidate]);
-		if (fromTypes) {
-			return mapWidgetType(fromTypes);
-		}
-	}
-
-	return 'text';
+	return iconForWidgetType(app, getPropertyWidgetType(app, key) ?? 'text');
 }
 
 export function opsForPropertyType(type: PropertyValueType): FilterOp[] {

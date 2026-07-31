@@ -6,9 +6,9 @@ import {
 	FilterRule,
 	FilterCombinator,
 	RuleCondition,
-	SORT_HEADER_NAME_ID,
 } from '../board/schema';
 import { getPropertyType, coerceOpForType, type PropertyValueType } from './propertyType';
+import { resolvePropertyValue } from './resolveProperty';
 import { stringifyPropertyValue } from './propertyValue';
 import { BoardCard, BoardColumn } from './types';
 
@@ -29,34 +29,6 @@ function parseFiniteNumber(raw: string): number | null {
 	}
 	const value = Number(trimmed);
 	return Number.isFinite(value) ? value : null;
-}
-
-function propertyText(
-	frontmatter: Record<string, unknown>,
-	property: string,
-): string {
-	const key = property.trim();
-	if (
-		!key ||
-		!Object.prototype.hasOwnProperty.call(frontmatter, key)
-	) {
-		return '';
-	}
-	return stringifyPropertyValue(frontmatter[key]) ?? '';
-}
-
-function propertyRaw(
-	frontmatter: Record<string, unknown>,
-	property: string,
-): unknown {
-	const key = property.trim();
-	if (
-		!key ||
-		!Object.prototype.hasOwnProperty.call(frontmatter, key)
-	) {
-		return undefined;
-	}
-	return frontmatter[key];
 }
 
 function matchTextOp(haystack: string, op: FilterOp, value: string): boolean {
@@ -226,19 +198,15 @@ export function matchesFilterRule(
 		return matchTextOp(card.body, op, rule.value);
 	}
 
-	if (rule.property === SORT_HEADER_NAME_ID) {
-		const op = coerceOpForType(rule.op, 'text');
-		return matchTextOp(card.title, op, rule.value);
-	}
-
 	const type: PropertyValueType = getPropertyType(app, rule.property);
 	const op = coerceOpForType(rule.op, type);
+	const resolved = resolvePropertyValue(app, card, rule.property);
 
 	if (type === 'checkbox') {
-		return matchCheckboxOp(propertyRaw(card.frontmatter, rule.property), op);
+		return matchCheckboxOp(resolved.raw, op);
 	}
 
-	const text = propertyText(card.frontmatter, rule.property);
+	const text = resolved.text;
 
 	if (type === 'number') {
 		return matchNumericOp(text, op, rule.value);

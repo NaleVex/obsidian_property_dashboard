@@ -1,7 +1,8 @@
-import { setIcon } from 'obsidian';
+import { App, setIcon } from 'obsidian';
 import { useEffect, useRef } from 'react';
 import { CardFieldDef, CardFieldType } from '../board/schema';
 import { strings } from '../i18n';
+import { PropertyPicker } from './PropertyPicker';
 
 function TrashIcon() {
 	const ref = useRef<HTMLSpanElement>(null);
@@ -22,6 +23,7 @@ function parseFieldNumber(raw: string, fallback: number): number {
 }
 
 interface DisplayFieldRowProps {
+	app: App;
 	field: CardFieldDef;
 	onUpdate: (patch: Partial<CardFieldDef>) => void;
 	onDelete: () => void;
@@ -29,6 +31,7 @@ interface DisplayFieldRowProps {
 }
 
 export function DisplayFieldRow({
+	app,
 	field,
 	onUpdate,
 	onDelete,
@@ -68,13 +71,13 @@ export function DisplayFieldRow({
 			</select>
 
 			{field.type === 'property' ? (
-				<input
-					className="pk-input"
-					type="text"
+				<PropertyPicker
+					app={app}
 					value={field.property}
+					fullWidth
+					ariaLabel={strings.displayField.propertyName}
 					placeholder={strings.displayField.propertyName}
-					aria-label={strings.displayField.propertyName}
-					onChange={(event) => onUpdate({ property: event.target.value })}
+					onChange={(property) => onUpdate({ property })}
 				/>
 			) : (
 				<>

@@ -1,3 +1,4 @@
+import { App } from 'obsidian';
 import {
 	CardFieldDef,
 	KanbanViewConfig,
@@ -8,11 +9,12 @@ import { strings } from '../i18n';
 import { DisplayFieldRow } from './DisplayFieldRow';
 
 interface CardFieldsEditorProps {
+	app: App;
 	view: KanbanViewConfig;
 	onUpdateView: (updater: (current: KanbanViewConfig) => KanbanViewConfig) => void;
 }
 
-export function CardFieldsEditor({ view, onUpdateView }: CardFieldsEditorProps) {
+export function CardFieldsEditor({ app, view, onUpdateView }: CardFieldsEditorProps) {
 	const updateField = (fieldId: string, patch: Partial<CardFieldDef>) => {
 		onUpdateView((current) => ({
 			...current,
@@ -33,6 +35,7 @@ export function CardFieldsEditor({ view, onUpdateView }: CardFieldsEditorProps) 
 				{view.cardFields.map((field) => (
 					<DisplayFieldRow
 						key={field.id}
+						app={app}
 						field={field}
 						showIfMissing
 						onUpdate={(patch) => updateField(field.id, patch)}

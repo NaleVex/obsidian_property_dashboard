@@ -35,13 +35,8 @@ import {
 import { format, strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
 import { getColorPresets, pickCustomColor } from './colorPresets';
-import {
-	propertyPickerDisplayValue,
-	propertyPickerMenuTitle,
-	propertyPickerParseInput,
-	viewPropertyPickerOptions,
-	type PropertyOption,
-} from './propertyOptions';
+import { PropertyPicker } from './PropertyPicker';
+import { viewPropertyPickerOptions } from './propertyOptions';
 
 interface CardColorsPanelProps {
 	view: BoardViewConfig;
@@ -179,7 +174,7 @@ function SortableColorRow({
 	onDelete,
 }: {
 	rule: CardColorRule;
-	propertyOptions: PropertyOption[];
+	propertyOptions: ReturnType<typeof viewPropertyPickerOptions>;
 	onChange: (next: CardColorRule) => void;
 	onCopy: () => void;
 	onDelete: () => void;
@@ -206,33 +201,6 @@ function SortableColorRow({
 		propertyType === 'datetime'
 			? normalizeDatetimeInputValue(rule.value)
 			: rule.value;
-
-	const openPropertyMenu = (event: MouseEvent<HTMLButtonElement>) => {
-		event.preventDefault();
-		const menu = new Menu();
-		if (propertyOptions.length === 0) {
-			menu.addItem((item) => {
-				item.setTitle(strings.cardColors.noCardFields).setDisabled(true);
-			});
-		} else {
-			for (const option of propertyOptions) {
-				menu.addItem((item) => {
-					item.setTitle(propertyPickerMenuTitle(option)).onClick(() => {
-						const nextType = getPropertyType(app, option.property);
-						onChange({
-							...rule,
-							property: option.property,
-							op: coerceOpForType(rule.op, nextType),
-						});
-					});
-					if (rule.property === option.property) {
-						item.setChecked(true);
-					}
-				});
-			}
-		}
-		menu.showAtMouseEvent(event.nativeEvent);
-	};
 
 	return (
 		<div ref={setNodeRef} style={style} className="pk-filter-row">
@@ -268,33 +236,22 @@ function SortableColorRow({
 			</select>
 
 			{rule.source === 'property' && (
-				<div className="pk-filter-property-wrap">
-					<input
-						className="pk-input pk-filter-property"
-						type="text"
-						placeholder={strings.cardColors.propertyName}
-						aria-label={strings.cardColors.propertyName}
-						value={propertyPickerDisplayValue(rule.property)}
-						onChange={(event) => {
-							const property = propertyPickerParseInput(event.target.value);
-							const nextType = getPropertyType(app, property);
-							onChange({
-								...rule,
-								property,
-								op: coerceOpForType(rule.op, nextType),
-							});
-						}}
-					/>
-					<button
-						type="button"
-						className="pk-icon-button pk-filter-property-pick"
-						aria-label={strings.cardColors.pickFromCardFields}
-						title={strings.cardColors.pickFromCardFields}
-						onClick={openPropertyMenu}
-					>
-						<ActionIcon name="chevron-down" />
-					</button>
-				</div>
+				<PropertyPicker
+					app={app}
+					value={rule.property}
+					options={propertyOptions}
+					allowCreate={false}
+					ariaLabel={strings.cardColors.propertyName}
+					placeholder={strings.cardColors.propertyName}
+					onChange={(property) => {
+						const nextType = getPropertyType(app, property);
+						onChange({
+							...rule,
+							property,
+							op: coerceOpForType(rule.op, nextType),
+						});
+					}}
+				/>
 			)}
 
 			<select
@@ -378,13 +335,13 @@ function SortableColorRow({
 }
 
 export function CardColorsPanel({ view }: CardColorsPanelProps) {
-	const { updateDocument } = useBoardApp();
+	const { app, updateDocument } = useBoardApp();
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
 	);
 
 	const cardColors = view.cardColors;
-	const propertyOptions = viewPropertyPickerOptions(view);
+	const propertyOptions = viewPropertyPickerOptions(app, view);
 
 	const patchCardColors = (next: CardColorRule[]) => {
 		updateDocument((doc) => ({

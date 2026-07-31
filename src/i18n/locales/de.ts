@@ -80,6 +80,26 @@ export const STRINGS_DE: Strings = {
 	folderSuggest: {
 		placeholder: 'Ordner auswählen…',
 	},
+	fileProperties: {
+		name: 'Dateiname',
+		path: 'Dateipfad',
+		folder: 'Ordner',
+		ext: 'Dateierweiterung',
+		size: 'Dateigröße',
+		ctime: 'Erstellt',
+		mtime: 'Geändert',
+		tags: 'Datei-Tags',
+		links: 'Datei-Links',
+		backlinks: 'Datei-Backlinks',
+		embeds: 'Datei-Einbettungen',
+	},
+	propertyPicker: {
+		placeholder: 'Suchen oder erstellen…',
+		empty: 'Keine passenden Eigenschaften',
+		create: '„{query}“ erstellen',
+		pickProperty: 'Eigenschaft wählen',
+		openList: 'Eigenschaftsliste öffnen',
+	},
 	viewSettings: {
 		title: 'Ansichtseinstellungen',
 		titleNamed: 'Ansichtseinstellungen — {name}',
@@ -115,7 +135,7 @@ export const STRINGS_DE: Strings = {
 		sortDesc: 'Sortierung aufheben',
 	},
 	cardFields: {
-		title: 'Felder auf einer Karte',
+		title: 'Werte',
 		hint: 'Eigenschaften aus dem Frontmatter oder Absatzausschnitte aus dem Notizkörper, die auf Karten angezeigt werden.',
 	},
 	tableValues: {
