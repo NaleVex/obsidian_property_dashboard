@@ -6,10 +6,11 @@ import { spawnSync } from 'node:child_process';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
 
-const DEFAULT_VAULT = '/Users/funapple/Documents/Obsidian/plugin';
+const DEFAULT_VAULT = join(projectRoot, 'vault');
 const PLUGIN_ID = 'property-board';
 
-const vaultPath = resolve(process.argv[2] ?? process.env.OBSIDIAN_VAULT ?? DEFAULT_VAULT);
+const positionalVault = process.argv.slice(2).find((arg) => !arg.startsWith('--'));
+const vaultPath = resolve(positionalVault ?? process.env.OBSIDIAN_VAULT ?? DEFAULT_VAULT);
 const pluginDir = join(vaultPath, '.obsidian', 'plugins', PLUGIN_ID);
 
 const requiredFiles = ['main.js', 'manifest.json', 'styles.css'];

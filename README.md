@@ -85,7 +85,9 @@ npm run deploy
 
 By default this builds the plugin and copies `main.js`, `manifest.json`, and `styles.css` to:
 
-`/Users/funapple/Documents/Obsidian/plugin/.obsidian/plugins/property-kanban/`
+`vault/.obsidian/plugins/property-board/`
+
+(in this repo’s local `vault/` folder)
 
 Override the vault path:
 

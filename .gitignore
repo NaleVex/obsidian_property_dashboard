@@ -26,5 +26,6 @@ Thumbs.db
 .env.*
 !.env.example
 
-# Optional local vault path override notes
+# Local Obsidian test vault
+vault/
 .obsidian/
