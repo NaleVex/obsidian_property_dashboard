@@ -2,6 +2,8 @@
 
 An Obsidian plugin that adds a `.board` filetype. Each board file stores its own settings and views, and opens in a dedicated board view.
 
+**Repository:** https://github.com/NaleVex/obsidian_property_dashboard
+
 ## Features
 
 - **Board files** — Create `.board` documents that open in their own view
@@ -105,4 +107,13 @@ npm run deploy:skip-build
 
 ## License
 
-MIT
+Copyright (C) 2026 NaleVex.
+
+This project is licensed under the GNU General Public License v3.0.
+See [LICENSE](LICENSE) for the full text.
+
+If you fork or redistribute this plugin, you must:
+- Keep this project under GPL-3.0
+- Preserve copyright and license notices
+- Clearly state any changes you made
+- Credit the original project: https://github.com/NaleVex/obsidian_property_dashboard
