@@ -1,17 +1,33 @@
 # Property Board
 
-An Obsidian plugin that adds a `.board` filetype. Each board file stores its own settings and views, and opens in a dedicated board view.
+Property Board turns your Obsidian notes into live boards driven by frontmatter properties. Use it to track status, group work, or browse notes as Kanban cards or table rows—without leaving the vault.
+
+Each board is a `.board` file that stores its own settings and views. Open it like a normal note; notes in scope that have the trigger property show up automatically and stay in sync as you edit the vault.
 
 **Repository:** https://github.com/NaleVex/obsidian_property_dashboard
 
 ## Features
 
-- **Board files** — Create `.board` documents that open in their own view
-- **Per-board settings** — Trigger property, scope (all / siblings / folder), and known values
-- **Multiple views** — Tabs on the board; currently kanban only
-- **Kanban columns** — One column per configured value, plus an **Unknown** column
-- **Read-only cards** — Notes that have the trigger property appear as title-only cards
-- **Live sync** — Board updates when notes change in the vault
+- **Board files** — Per-board config in the vault; create via ribbon, command palette, or file explorer
+- **Kanban and table views** — Multiple named views per board; add, rename, duplicate, or delete views
+- **Property-driven grouping** — Kanban columns from a trigger property (e.g. `status`), plus an **Unknown** column
+- **Scope** — Entire vault, same folder as the board, or a chosen folder
+- **Card and column fields** — Show properties, file metadata, or note-body paragraph slices on cards and in table columns
+- **Filters and sort** — Multi-rule filters and sorting on both view types; quick search by title or fields
+- **Colors** — Column accents and conditional card/row colors
+- **Drag to update** — Move Kanban cards between columns to write the trigger property on the note
+- **Live sync** — Boards refresh when notes are created, edited, renamed, or deleted
+- **Languages** — English, Russian, German, or follow Obsidian’s language
+
+## Roadmap
+
+Ideas on the horizon:
+
+- Card view
+- Formula fields
+- More language translations
+
+If something would make Property Board more useful for you, feel free to open an issue or start a discussion — happy to hear what you’d like next.
 
 ## Installation
 
@@ -39,7 +55,7 @@ status: in-progress
 ---
 ```
 
-5. Add more kanban views with the **+** tab control if needed.
+5. Add more Kanban or Table views with the **+** tab control if needed.
 
 Notes without the trigger property are excluded. Notes with the property but an empty or unrecognized value appear in the **Unknown** column.
 
