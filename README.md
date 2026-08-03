@@ -133,3 +133,32 @@ If you fork or redistribute this plugin, you must:
 - Preserve copyright and license notices
 - Clearly state any changes you made
 - Credit the original project: https://github.com/NaleVex/obsidian_property_dashboard
+
+## Support
+
+If you'd like to support this project, you can send crypto to:
+
+<table>
+  <tr>
+    <td><img src="https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/32/color/btc.png" width="20" height="20" alt="BTC" /> BTC</td>
+    <td><code>bc1q33r5yfcw9stjzkvs86qpmp6fclgt4mukm2q7m0</code></td>
+  </tr>
+  <tr>
+    <td><img src="https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/32/color/eth.png" width="20" height="20" alt="ETH" /> ETH</td>
+    <td><code>0x596E874308D59769820Cc4038645E43a603DecC1</code></td>
+  </tr>
+  <tr>
+    <td><img src="https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/32/color/usdt.png" width="20" height="20" alt="USDT" /> USDT (TRC-20)</td>
+    <td><code>THXNhyPo9pwcEBUmUsWiLWDZ4BtqPSQbpC</code></td>
+  </tr>
+  <tr>
+    <td><img src="https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/32/color/sol.png" width="20" height="20" alt="SOL" /> SOL</td>
+    <td><code>EWAM8kDe3KwszupkitbtBhWJfEd1tbyjwCCEK1DgCfB</code></td>
+  </tr>
+  <tr>
+    <td><img src="https://assets.coingecko.com/coins/images/17980/small/ton_symbol.png" width="20" height="20" alt="TON" /> TON (GRAM)</td>
+    <td><code>UQCsPSejXHfRcnEgbxK0PLfUbbNnicK4Av8ldKHS80J-OPGu</code></td>
+  </tr>
+</table>
+
+*If you'd like to use something else, please ask me.*
