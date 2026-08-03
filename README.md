@@ -1,33 +1,29 @@
 # Property Board
 
-Property Board turns your Obsidian notes into live boards driven by frontmatter properties. Use it to track status, group work, or browse notes as Kanban cards or table rows—without leaving the vault.
+Build Kanban and table boards from your notes’ frontmatter properties.
 
-Each board is a `.board` file that stores its own settings and views. Open it like a normal note; notes in scope that have the trigger property show up automatically and stay in sync as you edit the vault.
+Each board is a `.board` file in your vault. Pick a trigger property (for example `status`), and matching notes appear as cards or rows—grouped by that property’s values. Move a Kanban card to update the property on the note.
 
 **Repository:** https://github.com/NaleVex/obsidian_property_dashboard
 
+![Kanban board with High Priority view](docs/kanban.png)
+
+![Table view with filters, sort, and colors](docs/table.png)
+
 ## Features
 
-- **Board files** — Per-board config in the vault; create via ribbon, command palette, or file explorer
-- **Kanban and table views** — Multiple named views per board; add, rename, duplicate, or delete views
-- **Property-driven grouping** — Kanban columns from a trigger property (e.g. `status`), plus an **Unknown** column
-- **Scope** — Entire vault, same folder as the board, or a chosen folder
-- **Card and column fields** — Show properties, file metadata, or note-body paragraph slices on cards and in table columns
-- **Filters and sort** — Multi-rule filters and sorting on both view types; quick search by title or fields
-- **Colors** — Column accents and conditional card/row colors
-- **Drag to update** — Move Kanban cards between columns to write the trigger property on the note
-- **Live sync** — Boards refresh when notes are created, edited, renamed, or deleted
-- **Languages** — English, Russian, German, or follow Obsidian’s language
+- **Boards as vault files** — Settings and views live in a `.board` file next to your notes, not buried in plugin settings
+- **Properties as the source of truth** — Columns come from a frontmatter key; empty or unknown values land in an **Unknown** column
+- **Kanban and table on one board** — Multiple named views share the same scope and trigger property
+- **Rich card and column fields** — Show properties, file metadata, or slices of the note body (paragraph fields)
 
 ## Roadmap
-
-Ideas on the horizon:
 
 - Card view
 - Formula fields
 - More language translations
 
-If something would make Property Board more useful for you, feel free to open an issue or start a discussion — happy to hear what you’d like next.
+Suggestions and issues are welcome.
 
 ## Installation
 
