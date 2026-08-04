@@ -27,6 +27,10 @@ Suggestions and issues are welcome.
 
 ## Installation
 
+### Community plugins
+
+Install from Obsidian: [Property Board](https://community.obsidian.md/plugins/property-board) — or search **Property Board** under Settings → Community plugins → Browse.
+
 ### Manual (development)
 
 1. Clone this repository into your vault's `.obsidian/plugins/property-board/` folder.
