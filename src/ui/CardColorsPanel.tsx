@@ -102,12 +102,11 @@ function ColorEffectButton({
 
 		for (const preset of presets) {
 			menu.addItem((item) => {
-				const title = window.document.createDocumentFragment();
-				const swatch = window.document.createElement('span');
-				swatch.className = 'pk-color-swatch';
-				swatch.style.background = preset.hex;
-				title.appendChild(swatch);
-				title.appendChild(window.document.createTextNode(preset.name));
+				const title = createFragment((frag) => {
+					const swatch = frag.createSpan({ cls: 'pk-color-swatch' });
+					swatch.style.background = preset.hex;
+					frag.appendText(preset.name);
+				});
 				item.setTitle(title).onClick(() => {
 					onChange({ kind: 'color', hex: preset.hex });
 				});

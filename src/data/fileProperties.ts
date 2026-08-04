@@ -94,7 +94,7 @@ function collectTags(app: App, file: TFile): string[] {
 			tags.add(entry.tag);
 		}
 	}
-	const fmTags = cache?.frontmatter?.tags;
+	const fmTags: unknown = cache?.frontmatter?.['tags'];
 	if (typeof fmTags === 'string' && fmTags.trim()) {
 		tags.add(fmTags.startsWith('#') ? fmTags : `#${fmTags}`);
 	} else if (Array.isArray(fmTags)) {

@@ -14,6 +14,30 @@ export class PluginSettingsTab extends PluginSettingTab {
 		super(app, plugin);
 	}
 
+	// 1.13.0+: Obsidian calls this and skips display().
+	getSettingDefinitions() {
+		return [
+			{
+				name: strings.pluginSettings.language,
+				desc: strings.pluginSettings.languageDesc,
+				render: (setting: Setting) => {
+					setting.addDropdown((dropdown) => {
+						dropdown
+							.addOption('auto', strings.pluginSettings.languageAuto)
+							.addOption('en', strings.pluginSettings.languageEn)
+							.addOption('ru', strings.pluginSettings.languageRu)
+							.addOption('de', strings.pluginSettings.languageDe)
+							.setValue(this.plugin.settings.language)
+							.onChange((value) => {
+								void this.onLanguageChange(value as PluginLanguage);
+							});
+					});
+				},
+			},
+		];
+	}
+
+	// < 1.13.0: Obsidian calls this.
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();

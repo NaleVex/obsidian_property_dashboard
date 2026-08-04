@@ -169,11 +169,14 @@ export class NoteIndex {
 		this.moveCardOptimistically(filePath, columnId, newValue);
 
 		try {
-			await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
-				if (this.settings?.indexMode === 'kanban') {
-					frontmatter[this.settings.triggerProperty] = newValue;
-				}
-			});
+			await this.app.fileManager.processFrontMatter(
+				file,
+				(frontmatter: Record<string, unknown>) => {
+					if (this.settings?.indexMode === 'kanban') {
+						frontmatter[this.settings.triggerProperty] = newValue;
+					}
+				},
+			);
 		} catch (error) {
 			this.cardIndex.set(filePath, previous);
 			this.setState(this.buildStateFromIndex(false));

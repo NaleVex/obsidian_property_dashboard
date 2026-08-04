@@ -232,7 +232,7 @@ export function PropertyPicker({
 			}
 			setOpen(false);
 		};
-		const onKeyDown = (event: globalThis.KeyboardEvent) => {
+		const onKeyDown = (event: WindowEventMap['keydown']) => {
 			if (event.key === 'Escape') {
 				setOpen(false);
 			}

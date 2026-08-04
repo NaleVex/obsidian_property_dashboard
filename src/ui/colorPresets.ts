@@ -24,13 +24,12 @@ export function pickCustomColor(
 	current: string | undefined,
 	onPick: (hex: string) => void,
 ): void {
-	const input = window.document.createElement('input');
-	input.type = 'color';
-	input.value =
-		current && HEX_COLOR_RE.test(current) ? current : '#3498db';
-	input.style.position = 'fixed';
-	input.style.left = '-9999px';
-	window.document.body.appendChild(input);
+	const input = createEl('input', {
+		type: 'color',
+		cls: 'pk-offscreen-color-input',
+		value: current && HEX_COLOR_RE.test(current) ? current : '#3498db',
+		parent: window.document.body,
+	});
 	input.addEventListener(
 		'change',
 		() => {
