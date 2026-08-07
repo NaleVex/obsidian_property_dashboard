@@ -14,10 +14,10 @@ export type LimitTo =
 	| { mode: 'folder'; path: string };
 
 export type BoardViewType = 'kanban' | 'table';
-export type CardFieldType = 'property' | 'paragraph';
+export type CardFieldType = 'property' | 'paragraph' | 'namedParagraph';
 
 export type FilterCombinator = 'and' | 'or' | 'not';
-export type FilterSource = 'property' | 'body';
+export type FilterSource = 'property' | 'body' | 'namedParagraph';
 export type FilterTextOp =
 	| 'eq'
 	| 'neq'
@@ -34,6 +34,8 @@ export interface FilterRule {
 	combinator: FilterCombinator;
 	source: FilterSource;
 	property: string;
+	/** Heading text (or substring) when source === 'namedParagraph'. */
+	header: string;
 	op: FilterOp;
 	value: string;
 	enabled: boolean;
@@ -43,6 +45,8 @@ export interface FilterRule {
 export interface RuleCondition {
 	source: FilterSource;
 	property: string;
+	/** Heading text (or substring) when source === 'namedParagraph'. */
+	header: string;
 	op: FilterOp;
 	value: string;
 }
@@ -75,6 +79,8 @@ export interface CardFieldDef {
 	property: string;
 	/** 1-based paragraph index; used when type === 'paragraph'. */
 	paragraph: number;
+	/** Heading text (or substring) for type === 'namedParagraph'. */
+	header: string;
 	/** 1-based inclusive end character; 0 = through end of paragraph. */
 	end: number;
 	label: string;
@@ -90,6 +96,7 @@ export interface TableValueDef {
 	type: CardFieldType;
 	property: string;
 	paragraph: number;
+	header: string;
 	end: number;
 	label: string;
 	showIfMissing: boolean;
@@ -177,6 +184,7 @@ export function createDefaultFilterRule(): FilterRule {
 		combinator: 'and',
 		source: 'property',
 		property: '',
+		header: '',
 		op: 'eq',
 		value: '',
 		enabled: true,
@@ -188,6 +196,7 @@ export function createDefaultCardColorRule(): CardColorRule {
 		id: createId(),
 		source: 'property',
 		property: '',
+		header: '',
 		op: 'eq',
 		value: '',
 		enabled: true,
@@ -288,7 +297,7 @@ const TEXT_OPS: FilterTextOp[] = [
 const NUMERIC_OPS: FilterNumericOp[] = ['eq', 'neq', 'lte', 'lt', 'gt', 'gte'];
 const CHECKBOX_OPS: FilterCheckboxOp[] = ['is_true', 'is_false'];
 const COMBINATORS: FilterCombinator[] = ['and', 'or', 'not'];
-const SOURCES: FilterSource[] = ['property', 'body'];
+const SOURCES: FilterSource[] = ['property', 'body', 'namedParagraph'];
 const SORT_DIRECTIONS: SortDirection[] = ['asc', 'desc'];
 
 export function isTextOp(op: string): op is FilterTextOp {
@@ -321,6 +330,7 @@ export function createCardFieldDef(
 		type: partial.type ?? 'property',
 		property: partial.property ?? '',
 		paragraph: partial.paragraph ?? 1,
+		header: partial.header ?? '',
 		end: partial.end ?? 0,
 		label: partial.label ?? '',
 		showIfMissing: partial.showIfMissing ?? false,
@@ -393,6 +403,7 @@ export function createTableValueDef(
 		type: partial.type ?? 'property',
 		property: partial.property ?? '',
 		paragraph: partial.paragraph ?? 1,
+		header: partial.header ?? '',
 		end: partial.end ?? 0,
 		label: partial.label ?? '',
 		showIfMissing: partial.showIfMissing ?? false,
@@ -578,13 +589,19 @@ function parseDisplayFieldDef(raw: Record<string, unknown>): CardFieldDef | null
 		return null;
 	}
 
-	const type: CardFieldType = raw.type === 'paragraph' ? 'paragraph' : 'property';
+	const type: CardFieldType =
+		raw.type === 'namedParagraph'
+			? 'namedParagraph'
+			: raw.type === 'paragraph'
+				? 'paragraph'
+				: 'property';
 
 	return {
 		id: raw.id,
 		type,
 		property: typeof raw.property === 'string' ? raw.property : '',
 		paragraph: parsePositiveInt(raw.paragraph, 1),
+		header: typeof raw.header === 'string' ? raw.header : '',
 		end: parseNonNegativeInt(raw.end, 0),
 		label: typeof raw.label === 'string' ? raw.label : '',
 		showIfMissing: Boolean(raw.showIfMissing),
@@ -657,6 +674,7 @@ function parseFilterRule(raw: unknown): FilterRule | null {
 		combinator,
 		source,
 		property: typeof raw.property === 'string' ? raw.property : '',
+		header: typeof raw.header === 'string' ? raw.header : '',
 		op: parseFilterOp(raw.op),
 		value: typeof raw.value === 'string' ? raw.value : '',
 		enabled: raw.enabled !== false,
@@ -705,6 +723,7 @@ function parseCardColorRule(raw: unknown): CardColorRule | null {
 		id: raw.id,
 		source,
 		property: typeof raw.property === 'string' ? raw.property : '',
+		header: typeof raw.header === 'string' ? raw.header : '',
 		op: parseFilterOp(raw.op),
 		value: typeof raw.value === 'string' ? raw.value : '',
 		enabled: raw.enabled !== false,

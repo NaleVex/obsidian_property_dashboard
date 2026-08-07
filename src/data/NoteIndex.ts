@@ -8,7 +8,10 @@ import { strings } from '../i18n';
 import { fileMatchesLimitTo } from './limitTo';
 import { isFileProperty, resolveFilePropertyValue } from './fileProperties';
 import { snapshotFrontmatter, stripFrontmatter } from './noteBody';
-import { extractParagraphSlice } from './paragraphValue';
+import {
+	extractNamedParagraphSlice,
+	extractParagraphSlice,
+} from './paragraphValue';
 import { stringifyPropertyValue } from './propertyValue';
 import { getTriggerFromFrontmatter } from './trigger';
 import {
@@ -299,6 +302,15 @@ export class NoteIndex {
 				fields[def.id] = extractParagraphSlice(
 					body,
 					def.paragraph,
+					def.end,
+				);
+				continue;
+			}
+
+			if (def.type === 'namedParagraph') {
+				fields[def.id] = extractNamedParagraphSlice(
+					body,
+					def.header,
 					def.end,
 				);
 				continue;

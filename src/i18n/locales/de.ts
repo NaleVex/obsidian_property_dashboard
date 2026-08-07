@@ -23,6 +23,7 @@ export const STRINGS_DE: Strings = {
 		property: 'Eigenschaft',
 		body: 'Inhalt',
 		paragraph: 'Absatz',
+		namedParagraph: 'benannter Absatz',
 		value: 'Wert',
 		and: 'und',
 		or: 'oder',
@@ -136,18 +137,22 @@ export const STRINGS_DE: Strings = {
 	},
 	cardFields: {
 		title: 'Werte',
-		hint: 'Eigenschaften aus dem Frontmatter oder Absatzausschnitte aus dem Notizkörper, die auf Karten angezeigt werden.',
+		hint: 'Eigenschaften aus dem Frontmatter, nummerierte Absätze oder benannte Absätze aus dem Notizkörper, die auf Karten angezeigt werden.',
 	},
 	tableValues: {
 		title: 'Werte',
-		hint: 'Eigenschaften aus dem Frontmatter oder Absatzausschnitte aus dem Notizkörper, die als Tabellenspalten verwendet werden.',
+		hint: 'Eigenschaften aus dem Frontmatter, nummerierte Absätze oder benannte Absätze aus dem Notizkörper, die als Tabellenspalten verwendet werden.',
 	},
 	displayField: {
 		fieldType: 'Feldtyp',
 		propertyName: 'Eigenschaftsname',
 		paragraphNumber: 'Absatznummer',
-		paragraphNumberTitle: 'Absatznummer (1-basiert)',
+		paragraphNumberTitle: 'Absatznummer (1-basiert; Überschriften werden übersprungen)',
 		paraPlaceholder: 'Abs. Nr.',
+		headerText: 'Überschriftentext',
+		headerTextTitle:
+			'Text oder Teil der Überschrift; verwendet den Absatz nach dem ersten Treffer',
+		headerPlaceholder: 'Überschrift…',
 		endCharacter: 'Endzeichen',
 		endCharacterTitle: 'Endzeichen (1-basiert; 0 = bis Ende des Absatzes)',
 		endPlaceholder: 'Ende',
@@ -165,7 +170,7 @@ export const STRINGS_DE: Strings = {
 	},
 	filter: {
 		title: 'Filter',
-		hint: 'Nur Karten anzeigen, die diesen Regeln entsprechen. Mit und / oder / nicht Zeilen kombinieren; folgende und-Zeilen gehören zur aktuellen Gruppe.',
+		hint: 'Nur Karten anzeigen, die diesen Regeln entsprechen (Eigenschaften, Inhalt oder benannte Absätze). Mit und / oder / nicht Zeilen kombinieren; folgende und-Zeilen gehören zur aktuellen Gruppe.',
 		empty: 'Noch keine Filter. Klicke +, um einen hinzuzufügen.',
 		add: 'Filter hinzufügen',
 		reorder: 'Filter neu anordnen',
@@ -202,7 +207,7 @@ export const STRINGS_DE: Strings = {
 	},
 	cardColors: {
 		title: 'Kartenfarben',
-		hint: 'Karten nach diesen Regeln einfärben. Regeln gelten von unten nach oben; höhere überschreiben niedrigere. Mit „nicht einfärben“ einen Kanal unverändert lassen oder zurücksetzen zum Löschen.',
+		hint: 'Karten nach diesen Regeln einfärben (Eigenschaften, Inhalt oder benannte Absätze). Regeln gelten von unten nach oben; höhere überschreiben niedrigere. Mit „nicht einfärben“ einen Kanal unverändert lassen oder zurücksetzen zum Löschen.',
 		empty: 'Noch keine Farbregeln. Klicke +, um eine hinzuzufügen.',
 		add: 'Farbregel hinzufügen',
 		reorder: 'Farbregel neu anordnen',

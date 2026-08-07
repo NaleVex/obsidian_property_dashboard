@@ -1,6 +1,6 @@
 import { App, setIcon } from 'obsidian';
 import { useEffect, useRef } from 'react';
-import { CardFieldDef } from '../board/schema';
+import { CardFieldDef, CardFieldType } from '../board/schema';
 import { strings } from '../i18n';
 import { PropertyPicker } from './PropertyPicker';
 
@@ -22,6 +22,16 @@ function parseFieldNumber(raw: string, fallback: number): number {
 	return value;
 }
 
+function typeLabel(type: CardFieldType): string {
+	if (type === 'paragraph') {
+		return strings.common.paragraph;
+	}
+	if (type === 'namedParagraph') {
+		return strings.common.namedParagraph;
+	}
+	return strings.common.property;
+}
+
 interface DisplayFieldRowProps {
 	app: App;
 	field: CardFieldDef;
@@ -37,11 +47,22 @@ export function DisplayFieldRow({
 	onDelete,
 	showIfMissing = false,
 }: DisplayFieldRowProps) {
-	const toggleType = () => {
+	const cycleType = () => {
 		if (field.type === 'property') {
 			onUpdate({
 				type: 'paragraph',
 				property: '',
+				header: '',
+				paragraph: 1,
+				end: 0,
+			});
+			return;
+		}
+		if (field.type === 'paragraph') {
+			onUpdate({
+				type: 'namedParagraph',
+				property: '',
+				header: '',
 				paragraph: 1,
 				end: 0,
 			});
@@ -50,13 +71,9 @@ export function DisplayFieldRow({
 		onUpdate({
 			type: 'property',
 			property: '',
+			header: '',
 		});
 	};
-
-	const typeLabel =
-		field.type === 'paragraph'
-			? strings.common.paragraph
-			: strings.common.property;
 
 	return (
 		<div className="pk-field-row">
@@ -65,9 +82,9 @@ export function DisplayFieldRow({
 				className="pk-type-toggle"
 				aria-label={strings.displayField.fieldType}
 				title={strings.displayField.fieldType}
-				onClick={toggleType}
+				onClick={cycleType}
 			>
-				{typeLabel}
+				{typeLabel(field.type)}
 			</button>
 
 			{field.type === 'property' ? (
@@ -78,36 +95,51 @@ export function DisplayFieldRow({
 					placeholder={strings.displayField.propertyName}
 					onChange={(property) => onUpdate({ property })}
 				/>
-			) : (
-				<>
-					<input
-						className="pk-input pk-input-narrow"
-						type="number"
-						min={1}
-						value={field.paragraph}
-						placeholder={strings.displayField.paraPlaceholder}
-						aria-label={strings.displayField.paragraphNumber}
-						title={strings.displayField.paragraphNumberTitle}
-						onChange={(event) =>
-							onUpdate({
-								paragraph: parseFieldNumber(event.target.value, 1) || 1,
-							})
-						}
-					/>
-					<input
-						className="pk-input pk-input-narrow"
-						type="number"
-						min={0}
-						value={field.end}
-						placeholder={strings.displayField.endPlaceholder}
-						aria-label={strings.displayField.endCharacter}
-						title={strings.displayField.endCharacterTitle}
-						onChange={(event) =>
-							onUpdate({ end: parseFieldNumber(event.target.value, 0) })
-						}
-					/>
-				</>
-			)}
+			) : null}
+
+			{field.type === 'paragraph' ? (
+				<input
+					className="pk-input pk-input-narrow"
+					type="number"
+					min={1}
+					value={field.paragraph}
+					placeholder={strings.displayField.paraPlaceholder}
+					aria-label={strings.displayField.paragraphNumber}
+					title={strings.displayField.paragraphNumberTitle}
+					onChange={(event) =>
+						onUpdate({
+							paragraph: parseFieldNumber(event.target.value, 1) || 1,
+						})
+					}
+				/>
+			) : null}
+
+			{field.type === 'namedParagraph' ? (
+				<input
+					className="pk-input"
+					type="text"
+					value={field.header}
+					placeholder={strings.displayField.headerPlaceholder}
+					aria-label={strings.displayField.headerText}
+					title={strings.displayField.headerTextTitle}
+					onChange={(event) => onUpdate({ header: event.target.value })}
+				/>
+			) : null}
+
+			{field.type === 'paragraph' || field.type === 'namedParagraph' ? (
+				<input
+					className="pk-input pk-input-narrow"
+					type="number"
+					min={0}
+					value={field.end}
+					placeholder={strings.displayField.endPlaceholder}
+					aria-label={strings.displayField.endCharacter}
+					title={strings.displayField.endCharacterTitle}
+					onChange={(event) =>
+						onUpdate({ end: parseFieldNumber(event.target.value, 0) })
+					}
+				/>
+			) : null}
 
 			<input
 				className="pk-input"

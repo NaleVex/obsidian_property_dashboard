@@ -8,6 +8,7 @@ import {
 	RuleCondition,
 } from '../board/schema';
 import { getPropertyType, coerceOpForType, type PropertyValueType } from './propertyType';
+import { extractNamedParagraphSlice } from './paragraphValue';
 import { resolvePropertyValue } from './resolveProperty';
 import { stringifyPropertyValue } from './propertyValue';
 import { BoardCard, BoardColumn } from './types';
@@ -196,6 +197,12 @@ export function matchesFilterRule(
 	if (rule.source === 'body') {
 		const op = coerceOpForType(rule.op, 'text');
 		return matchTextOp(card.body, op, rule.value);
+	}
+
+	if (rule.source === 'namedParagraph') {
+		const op = coerceOpForType(rule.op, 'text');
+		const text = extractNamedParagraphSlice(card.body, rule.header, 0) ?? '';
+		return matchTextOp(text, op, rule.value);
 	}
 
 	const type: PropertyValueType = getPropertyType(app, rule.property);

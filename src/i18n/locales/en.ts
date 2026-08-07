@@ -21,6 +21,7 @@ export const STRINGS_EN = {
 		property: 'property',
 		body: 'body',
 		paragraph: 'paragraph',
+		namedParagraph: 'named paragraph',
 		value: 'Value',
 		and: 'and',
 		or: 'or',
@@ -134,18 +135,22 @@ export const STRINGS_EN = {
 	},
 	cardFields: {
 		title: 'Values',
-		hint: 'Properties from frontmatter or paragraph slices from note body, shown on cards.',
+		hint: 'Properties from frontmatter, numbered paragraphs, or named paragraphs from note body, shown on cards.',
 	},
 	tableValues: {
 		title: 'Values',
-		hint: 'Properties from frontmatter or paragraph slices from note body, used as table columns.',
+		hint: 'Properties from frontmatter, numbered paragraphs, or named paragraphs from note body, used as table columns.',
 	},
 	displayField: {
 		fieldType: 'Field type',
 		propertyName: 'Property name',
 		paragraphNumber: 'Paragraph number',
-		paragraphNumberTitle: 'Paragraph number (1-based)',
+		paragraphNumberTitle: 'Paragraph number (1-based; headers are skipped)',
 		paraPlaceholder: 'Para #',
+		headerText: 'Header text',
+		headerTextTitle:
+			'Text or part of the heading; uses the paragraph after the first match',
+		headerPlaceholder: 'Header…',
 		endCharacter: 'End character',
 		endCharacterTitle: 'End character (1-based; 0 = through end of paragraph)',
 		endPlaceholder: 'End',
@@ -163,7 +168,7 @@ export const STRINGS_EN = {
 	},
 	filter: {
 		title: 'Filters',
-		hint: 'Show only cards that match these rules. Use and / or / not to combine lines; following and lines join the current group.',
+		hint: 'Show only cards that match these rules (properties, body, or named paragraphs). Use and / or / not to combine lines; following and lines join the current group.',
 		empty: 'No filters yet. Click + to add one.',
 		add: 'Add filter',
 		reorder: 'Reorder filter',
@@ -200,7 +205,7 @@ export const STRINGS_EN = {
 	},
 	cardColors: {
 		title: 'Card colors',
-		hint: 'Color cards that match these rules. Rules apply bottom to top; higher rules overwrite lower ones. Use do not color to leave a channel unchanged, or reset to clear it.',
+		hint: 'Color cards that match these rules (properties, body, or named paragraphs). Rules apply bottom to top; higher rules overwrite lower ones. Use do not color to leave a channel unchanged, or reset to clear it.',
 		empty: 'No color rules yet. Click + to add one.',
 		add: 'Add color rule',
 		reorder: 'Reorder color rule',
