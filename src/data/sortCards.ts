@@ -1,10 +1,12 @@
 import { App } from 'obsidian';
 import {
+	parseViewFieldRef,
 	SORT_HEADER_NAME_ID,
 	SortDirection,
 	SortRule,
 } from '../board/schema';
 import { strings } from '../i18n';
+import { formulaValueFromText } from './formulaValue';
 import { getPropertyType, type PropertyValueType } from './propertyType';
 import { resolvePropertyValue } from './resolveProperty';
 import { BoardCard, BoardColumn } from './types';
@@ -52,6 +54,23 @@ type SortKey =
 	| { kind: 'text'; value: string }
 	| { kind: 'checkbox'; value: boolean };
 
+function inferFieldRefSortKey(text: string): SortKey {
+	const value = formulaValueFromText(text);
+	if (value.kind === 'number') {
+		return { kind: 'number', value: value.value };
+	}
+	if (value.kind === 'date') {
+		return { kind: 'number', value: value.ms };
+	}
+	if (value.kind === 'bool') {
+		return { kind: 'checkbox', value: value.value };
+	}
+	if (value.kind === 'err') {
+		return { kind: 'missing' };
+	}
+	return { kind: 'text', value: value.value };
+}
+
 function resolveSortKey(
 	app: App,
 	card: BoardCard,
@@ -59,6 +78,13 @@ function resolveSortKey(
 	type: PropertyValueType,
 ): SortKey {
 	const resolved = resolvePropertyValue(app, card, property);
+
+	if (parseViewFieldRef(property)) {
+		if (!resolved.present || !resolved.text) {
+			return { kind: 'missing' };
+		}
+		return inferFieldRefSortKey(resolved.text);
+	}
 
 	if (type === 'checkbox') {
 		if (!resolved.present) {

@@ -1,5 +1,5 @@
 import { App } from 'obsidian';
-import { SORT_HEADER_NAME_ID } from '../board/schema';
+import { parseViewFieldRef, SORT_HEADER_NAME_ID } from '../board/schema';
 import {
 	isFileProperty,
 	resolveFilePropertyValue,
@@ -43,6 +43,15 @@ export function resolvePropertyValue(
 	const key = property.trim();
 	if (!key) {
 		return { present: false, raw: undefined, text: '' };
+	}
+
+	const fieldId = parseViewFieldRef(key);
+	if (fieldId) {
+		const text = card.fields[fieldId];
+		if (text === null || text === undefined) {
+			return { present: false, raw: undefined, text: '' };
+		}
+		return { present: true, raw: text, text };
 	}
 
 	if (key === SORT_HEADER_NAME_ID) {

@@ -56,19 +56,20 @@ interface BoardCardProps {
 function renderFieldLine(
 	def: CardFieldDef,
 	value: string | null,
+	showLabel: boolean,
 ): { key: string; text: string } | null {
 	if (value === null) {
 		if (!def.showIfMissing) {
 			return null;
 		}
-		const label = def.label.trim();
+		const label = showLabel ? def.label.trim() : '';
 		return {
 			key: def.id,
 			text: label ? `${label} —` : '—',
 		};
 	}
 
-	const label = def.label.trim();
+	const label = showLabel ? def.label.trim() : '';
 	return {
 		key: def.id,
 		text: label ? `${label} ${value}` : value,
@@ -94,7 +95,11 @@ export function buildCardLines(
 		if (!def) {
 			continue;
 		}
-		const line = renderFieldLine(def, card.fields[def.id] ?? null);
+		const line = renderFieldLine(
+			def,
+			card.fields[def.id] ?? null,
+			item.showLabel,
+		);
 		if (line) {
 			lines.push(line);
 		}

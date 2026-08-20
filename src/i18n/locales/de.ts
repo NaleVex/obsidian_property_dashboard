@@ -24,6 +24,7 @@ export const STRINGS_DE: Strings = {
 		body: 'Inhalt',
 		paragraph: 'Absatz',
 		namedParagraph: 'benannter Absatz',
+		formula: 'Formel',
 		value: 'Wert',
 		and: 'und',
 		or: 'oder',
@@ -137,11 +138,11 @@ export const STRINGS_DE: Strings = {
 	},
 	cardFields: {
 		title: 'Werte',
-		hint: 'Eigenschaften aus dem Frontmatter, nummerierte Absätze oder benannte Absätze aus dem Notizkörper, die auf Karten angezeigt werden.',
+		hint: 'Eigenschaften aus dem Frontmatter, nummerierte oder benannte Absätze aus dem Notizkörper oder Formeln über numerische Eigenschaften, die auf Karten angezeigt werden.',
 	},
 	tableValues: {
 		title: 'Werte',
-		hint: 'Eigenschaften aus dem Frontmatter, nummerierte Absätze oder benannte Absätze aus dem Notizkörper, die als Tabellenspalten verwendet werden.',
+		hint: 'Eigenschaften aus dem Frontmatter, nummerierte oder benannte Absätze aus dem Notizkörper oder Formeln über numerische Eigenschaften, die als Tabellenspalten verwendet werden.',
 	},
 	displayField: {
 		fieldType: 'Feldtyp',
@@ -159,10 +160,14 @@ export const STRINGS_DE: Strings = {
 		displayName: 'Anzeigename',
 		displayNone: 'nicht anzeigen',
 		deleteField: 'Feld löschen',
+		editFormula: 'Formel bearbeiten',
+		formulaExpression: 'Formel',
+		formulaPlaceholder: '{price} * {qty} + 10.5',
 	},
 	cardsInfo: {
 		title: 'Karteninfo',
 		hint: 'Wähle, welche Felder auf Karten erscheinen und in welcher Reihenfolge.',
+		showDisplayName: 'Anzeigename',
 	},
 	tableColumns: {
 		title: 'Spalten',

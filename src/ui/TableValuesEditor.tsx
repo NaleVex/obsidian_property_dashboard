@@ -37,6 +37,7 @@ export function TableValuesEditor({ app, view, onUpdateView }: TableValuesEditor
 						key={value.id}
 						app={app}
 						field={value}
+						siblingFields={view.values}
 						onUpdate={(patch) => updateValue(value.id, patch)}
 						onDelete={() =>
 							onUpdateView((current) =>

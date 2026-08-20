@@ -326,6 +326,13 @@
 	gap: 8px;
 }
 
+.pk-field-block {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
 .pk-field-row {
 	display: flex;
 	align-items: center;
@@ -368,6 +375,26 @@
 
 .pk-type-toggle:hover {
 	background: var(--background-modifier-hover);
+}
+
+.pk-formula-editor {
+	position: relative;
+	min-width: 0;
+}
+
+.pk-formula-input {
+	width: 100%;
+	min-height: 4.5em;
+	resize: vertical;
+	box-sizing: border-box;
+	padding: 8px 10px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-small);
+	line-height: 1.4;
 }
 
 .pk-select {

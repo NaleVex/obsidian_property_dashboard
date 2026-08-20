@@ -22,6 +22,7 @@ export const STRINGS_EN = {
 		body: 'body',
 		paragraph: 'paragraph',
 		namedParagraph: 'named paragraph',
+		formula: 'formula',
 		value: 'Value',
 		and: 'and',
 		or: 'or',
@@ -135,11 +136,11 @@ export const STRINGS_EN = {
 	},
 	cardFields: {
 		title: 'Values',
-		hint: 'Properties from frontmatter, numbered paragraphs, or named paragraphs from note body, shown on cards.',
+		hint: 'Properties from frontmatter, numbered or named paragraphs from note body, or formulas over numeric properties, shown on cards.',
 	},
 	tableValues: {
 		title: 'Values',
-		hint: 'Properties from frontmatter, numbered paragraphs, or named paragraphs from note body, used as table columns.',
+		hint: 'Properties from frontmatter, numbered or named paragraphs from note body, or formulas over numeric properties, used as table columns.',
 	},
 	displayField: {
 		fieldType: 'Field type',
@@ -157,10 +158,14 @@ export const STRINGS_EN = {
 		displayName: 'Display name',
 		displayNone: 'display none',
 		deleteField: 'Delete field',
+		editFormula: 'Edit formula',
+		formulaExpression: 'Formula',
+		formulaPlaceholder: '{price} * {qty} + 10.5',
 	},
 	cardsInfo: {
 		title: 'Cards info',
 		hint: 'Choose which fields appear on cards and in what order.',
+		showDisplayName: 'Display name',
 	},
 	tableColumns: {
 		title: 'Columns',

@@ -24,6 +24,7 @@ export const STRINGS_RU: Strings = {
 		body: 'текст',
 		paragraph: 'абзац',
 		namedParagraph: 'именованный абзац',
+		formula: 'формула',
 		value: 'Значение',
 		and: 'и',
 		or: 'или',
@@ -137,11 +138,11 @@ export const STRINGS_RU: Strings = {
 	},
 	cardFields: {
 		title: 'Значения',
-		hint: 'Свойства из frontmatter, нумерованные абзацы или именованные абзацы из тела заметки, отображаемые на карточках.',
+		hint: 'Свойства из frontmatter, нумерованные или именованные абзацы из тела заметки, либо формулы по числовым свойствам, отображаемые на карточках.',
 	},
 	tableValues: {
 		title: 'Значения',
-		hint: 'Свойства из frontmatter, нумерованные абзацы или именованные абзацы из тела заметки, используемые как столбцы таблицы.',
+		hint: 'Свойства из frontmatter, нумерованные или именованные абзацы из тела заметки, либо формулы по числовым свойствам, используемые как столбцы таблицы.',
 	},
 	displayField: {
 		fieldType: 'Тип поля',
@@ -159,10 +160,14 @@ export const STRINGS_RU: Strings = {
 		displayName: 'Отображаемое имя',
 		displayNone: 'не показывать',
 		deleteField: 'Удалить поле',
+		editFormula: 'Редактировать формулу',
+		formulaExpression: 'Формула',
+		formulaPlaceholder: '{price} * {qty} + 10.5',
 	},
 	cardsInfo: {
 		title: 'Поля карточек',
 		hint: 'Выберите, какие поля показывать на карточках и в каком порядке.',
+		showDisplayName: 'Отображаемое имя',
 	},
 	tableColumns: {
 		title: 'Столбцы',

@@ -7,6 +7,21 @@ export const CARD_INFO_NAME_ID = '__name__';
 export const TABLE_COLUMN_NAME_ID = CARD_INFO_NAME_ID;
 /** Sentinel property for sorting by note title (header name). */
 export const SORT_HEADER_NAME_ID = CARD_INFO_NAME_ID;
+/** Prefix for filter/sort/color refs to a view display field (formulas). */
+export const VIEW_FIELD_PREFIX = 'field:';
+
+export function viewFieldRef(fieldId: string): string {
+	return `${VIEW_FIELD_PREFIX}${fieldId}`;
+}
+
+export function parseViewFieldRef(property: string): string | null {
+	const key = property.trim();
+	if (!key.startsWith(VIEW_FIELD_PREFIX)) {
+		return null;
+	}
+	const id = key.slice(VIEW_FIELD_PREFIX.length).trim();
+	return id.length > 0 ? id : null;
+}
 
 export type LimitTo =
 	| { mode: 'all' }
@@ -14,7 +29,11 @@ export type LimitTo =
 	| { mode: 'folder'; path: string };
 
 export type BoardViewType = 'kanban' | 'table';
-export type CardFieldType = 'property' | 'paragraph' | 'namedParagraph';
+export type CardFieldType =
+	| 'property'
+	| 'paragraph'
+	| 'namedParagraph'
+	| 'formula';
 
 export type FilterCombinator = 'and' | 'or' | 'not';
 export type FilterSource = 'property' | 'body' | 'namedParagraph';
@@ -83,13 +102,22 @@ export interface CardFieldDef {
 	header: string;
 	/** 1-based inclusive end character; 0 = through end of paragraph. */
 	end: number;
+	/** Arithmetic expression; used when type === 'formula'. */
+	formula: string;
 	label: string;
 	showIfMissing: boolean;
 }
 
 export type CardInfoItem =
 	| { id: typeof CARD_INFO_NAME_ID; kind: 'name'; enabled: boolean }
-	| { id: string; kind: 'field'; fieldId: string; enabled: boolean };
+	| {
+			id: string;
+			kind: 'field';
+			fieldId: string;
+			enabled: boolean;
+			/** When true, prefix the field's display name on the card. Default on. */
+			showLabel: boolean;
+	  };
 
 export interface TableValueDef {
 	id: string;
@@ -98,6 +126,7 @@ export interface TableValueDef {
 	paragraph: number;
 	header: string;
 	end: number;
+	formula: string;
 	label: string;
 	showIfMissing: boolean;
 }
@@ -332,6 +361,7 @@ export function createCardFieldDef(
 		paragraph: partial.paragraph ?? 1,
 		header: partial.header ?? '',
 		end: partial.end ?? 0,
+		formula: partial.formula ?? '',
 		label: partial.label ?? '',
 		showIfMissing: partial.showIfMissing ?? false,
 	};
@@ -369,6 +399,7 @@ export function normalizeCardInfo(
 			kind: 'field',
 			fieldId: item.fieldId,
 			enabled: item.enabled,
+			showLabel: item.showLabel !== false,
 		});
 	}
 
@@ -389,6 +420,7 @@ export function normalizeCardInfo(
 			kind: 'field',
 			fieldId: field.id,
 			enabled: true,
+			showLabel: true,
 		});
 	}
 
@@ -405,28 +437,47 @@ export function createTableValueDef(
 		paragraph: partial.paragraph ?? 1,
 		header: partial.header ?? '',
 		end: partial.end ?? 0,
+		formula: partial.formula ?? '',
 		label: partial.label ?? '',
 		showIfMissing: partial.showIfMissing ?? false,
 	};
 }
 
-export function getViewPropertyFields(
-	view: BoardViewConfig,
-): Array<{ property: string; label: string }> {
-	if (isKanbanView(view)) {
-		return view.cardFields
-			.filter((field) => field.type === 'property')
-			.map((field) => ({
+function selectableViewFields(
+	fields: Array<CardFieldDef | TableValueDef>,
+): Array<{ property: string; label: string; kind: 'property' | 'formula' }> {
+	const result: Array<{
+		property: string;
+		label: string;
+		kind: 'property' | 'formula';
+	}> = [];
+	for (const field of fields) {
+		if (field.type === 'property') {
+			result.push({
 				property: field.property,
 				label: field.label,
-			}));
+				kind: 'property',
+			});
+			continue;
+		}
+		if (field.type === 'formula') {
+			result.push({
+				property: viewFieldRef(field.id),
+				label: field.label,
+				kind: 'formula',
+			});
+		}
 	}
-	return view.values
-		.filter((value) => value.type === 'property')
-		.map((value) => ({
-			property: value.property,
-			label: value.label,
-		}));
+	return result;
+}
+
+export function getViewPropertyFields(
+	view: BoardViewConfig,
+): Array<{ property: string; label: string; kind: 'property' | 'formula' }> {
+	if (isKanbanView(view)) {
+		return selectableViewFields(view.cardFields);
+	}
+	return selectableViewFields(view.values);
 }
 
 /** Ensure Name exists; drop orphan field refs; keep order. */
@@ -521,7 +572,13 @@ export function addCardFieldToView(view: KanbanViewConfig): KanbanViewConfig {
 	const cardFields = [...view.cardFields, field];
 	const cardInfo = [
 		...view.cardInfo,
-		{ id: createId(), kind: 'field' as const, fieldId: field.id, enabled: true },
+		{
+			id: createId(),
+			kind: 'field' as const,
+			fieldId: field.id,
+			enabled: true,
+			showLabel: true,
+		},
 	];
 	return {
 		...view,
@@ -594,7 +651,9 @@ function parseDisplayFieldDef(raw: Record<string, unknown>): CardFieldDef | null
 			? 'namedParagraph'
 			: raw.type === 'paragraph'
 				? 'paragraph'
-				: 'property';
+				: raw.type === 'formula'
+					? 'formula'
+					: 'property';
 
 	return {
 		id: raw.id,
@@ -603,6 +662,7 @@ function parseDisplayFieldDef(raw: Record<string, unknown>): CardFieldDef | null
 		paragraph: parsePositiveInt(raw.paragraph, 1),
 		header: typeof raw.header === 'string' ? raw.header : '',
 		end: parseNonNegativeInt(raw.end, 0),
+		formula: typeof raw.formula === 'string' ? raw.formula : '',
 		label: typeof raw.label === 'string' ? raw.label : '',
 		showIfMissing: Boolean(raw.showIfMissing),
 	};
@@ -650,6 +710,7 @@ function parseCardInfo(raw: unknown, cardFields: CardFieldDef[]): CardInfoItem[]
 				kind: 'field',
 				fieldId: item.fieldId,
 				enabled: item.enabled !== false,
+				showLabel: item.showLabel !== false,
 			});
 		}
 	}
