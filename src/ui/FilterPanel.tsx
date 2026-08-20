@@ -144,6 +144,7 @@ function SortableFilterRow({
 			>
 				<option value="property">{strings.common.property}</option>
 				<option value="body">{strings.common.body}</option>
+				<option value="namedParagraph">{strings.common.namedParagraph}</option>
 			</select>
 
 			{rule.source === 'property' && (
@@ -162,6 +163,20 @@ function SortableFilterRow({
 							op: coerceOpForType(rule.op, nextType),
 						});
 					}}
+				/>
+			)}
+
+			{rule.source === 'namedParagraph' && (
+				<input
+					className="pk-input"
+					type="text"
+					value={rule.header}
+					placeholder={strings.displayField.headerPlaceholder}
+					aria-label={strings.displayField.headerText}
+					title={strings.displayField.headerTextTitle}
+					onChange={(event) =>
+						onChange({ ...rule, header: event.target.value })
+					}
 				/>
 			)}
 

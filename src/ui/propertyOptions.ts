@@ -47,6 +47,17 @@ export function viewPropertyPickerOptions(
 		}
 		seen.add(property);
 
+		if (field.kind === 'formula') {
+			options.push({
+				property,
+				label: field.label.trim() || strings.common.formula,
+				icon: 'sigma',
+				kind: 'frontmatter',
+				type: 'text',
+			});
+			continue;
+		}
+
 		const label = field.label.trim() || propertyDisplayLabel(app, property) || property;
 		const kind = isFileProperty(property)
 			? 'file'

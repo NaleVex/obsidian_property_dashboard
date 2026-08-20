@@ -7,8 +7,20 @@ import {
 import { strings } from '../i18n';
 import { fileMatchesLimitTo } from './limitTo';
 import { isFileProperty, resolveFilePropertyValue } from './fileProperties';
+import {
+	evaluateFormula,
+	findFieldByRef,
+	formatFormulaValue,
+	formulaValueFromRaw,
+	formulaValueFromText,
+	FORMULA_ERR,
+	type FormulaValue,
+} from './formulaValue';
 import { snapshotFrontmatter, stripFrontmatter } from './noteBody';
-import { extractParagraphSlice } from './paragraphValue';
+import {
+	extractNamedParagraphSlice,
+	extractParagraphSlice,
+} from './paragraphValue';
 import { stringifyPropertyValue } from './propertyValue';
 import { getTriggerFromFrontmatter } from './trigger';
 import {
@@ -288,6 +300,44 @@ export class NoteIndex {
 		void this.updateFile(file);
 	}
 
+	private readNonFormulaField(
+		file: TFile,
+		frontmatter: Record<string, unknown> | undefined,
+		body: string,
+		def: CardFieldDef,
+	): string | null {
+		if (def.type === 'paragraph') {
+			return extractParagraphSlice(body, def.paragraph, def.end);
+		}
+
+		if (def.type === 'namedParagraph') {
+			return extractNamedParagraphSlice(body, def.header, def.end);
+		}
+
+		if (!def.property) {
+			return null;
+		}
+
+		if (isFileProperty(def.property)) {
+			const resolved = resolveFilePropertyValue(
+				this.app,
+				file.path,
+				def.property,
+			);
+			return resolved.present
+				? resolved.text || stringifyPropertyValue(resolved.raw)
+				: null;
+		}
+
+		if (
+			!frontmatter ||
+			!Object.prototype.hasOwnProperty.call(frontmatter, def.property)
+		) {
+			return null;
+		}
+		return stringifyPropertyValue(frontmatter[def.property]);
+	}
+
 	private readCardFields(
 		file: TFile,
 		frontmatter: Record<string, unknown> | undefined,
@@ -295,41 +345,56 @@ export class NoteIndex {
 	): Record<string, string | null> {
 		const fields: Record<string, string | null> = {};
 		for (const def of this.cardFields) {
-			if (def.type === 'paragraph') {
-				fields[def.id] = extractParagraphSlice(
-					body,
-					def.paragraph,
-					def.end,
-				);
+			if (def.type === 'formula') {
 				continue;
 			}
+			fields[def.id] = this.readNonFormulaField(file, frontmatter, body, def);
+		}
 
-			if (!def.property) {
-				fields[def.id] = null;
-				continue;
-			}
+		const formulaMemo = new Map<string, FormulaValue>();
+		const visiting = new Set<string>();
 
-			if (isFileProperty(def.property)) {
-				const resolved = resolveFilePropertyValue(
-					this.app,
-					file.path,
-					def.property,
-				);
-				fields[def.id] = resolved.present
-					? resolved.text || stringifyPropertyValue(resolved.raw)
-					: null;
-				continue;
-			}
-
+		const lookupFrontmatter = (name: string): FormulaValue => {
 			if (
 				!frontmatter ||
-				!Object.prototype.hasOwnProperty.call(frontmatter, def.property)
+				!Object.prototype.hasOwnProperty.call(frontmatter, name)
 			) {
-				fields[def.id] = null;
+				return { kind: 'string', value: '' };
+			}
+			return formulaValueFromRaw(frontmatter[name]);
+		};
+
+		const evalFormulaField = (def: CardFieldDef): FormulaValue => {
+			const cached = formulaMemo.get(def.id);
+			if (cached) {
+				return cached;
+			}
+			if (visiting.has(def.id)) {
+				return FORMULA_ERR;
+			}
+			visiting.add(def.id);
+			const result = evaluateFormula(def.formula, (name) => {
+				const sibling = findFieldByRef(this.cardFields, name, def.id);
+				if (sibling) {
+					if (sibling.type === 'formula') {
+						return evalFormulaField(sibling);
+					}
+					return formulaValueFromText(fields[sibling.id]);
+				}
+				return lookupFrontmatter(name);
+			});
+			visiting.delete(def.id);
+			formulaMemo.set(def.id, result);
+			return result;
+		};
+
+		for (const def of this.cardFields) {
+			if (def.type !== 'formula') {
 				continue;
 			}
-			fields[def.id] = stringifyPropertyValue(frontmatter[def.property]);
+			fields[def.id] = formatFormulaValue(evalFormulaField(def));
 		}
+
 		return fields;
 	}
 

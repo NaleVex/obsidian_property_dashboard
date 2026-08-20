@@ -37,6 +37,7 @@ export function CardFieldsEditor({ app, view, onUpdateView }: CardFieldsEditorPr
 						key={field.id}
 						app={app}
 						field={field}
+						siblingFields={view.cardFields}
 						showIfMissing
 						onUpdate={(patch) => updateField(field.id, patch)}
 						onDelete={() =>

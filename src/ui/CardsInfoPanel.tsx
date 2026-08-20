@@ -53,10 +53,12 @@ function SortableInfoRow({
 	view,
 	item,
 	onToggle,
+	onToggleLabel,
 }: {
 	view: KanbanViewConfig;
 	item: CardInfoItem;
 	onToggle: (id: string, enabled: boolean) => void;
+	onToggleLabel?: (id: string, showLabel: boolean) => void;
 }) {
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
 		useSortable({ id: item.id });
@@ -79,6 +81,22 @@ function SortableInfoRow({
 				<GripIcon />
 			</button>
 			<span className="pk-cards-info-label">{itemLabel(view, item)}</span>
+			{item.kind === 'field' && onToggleLabel ? (
+				<label
+					className="pk-switch"
+					title={strings.cardsInfo.showDisplayName}
+				>
+					<input
+						type="checkbox"
+						checked={item.showLabel}
+						aria-label={strings.cardsInfo.showDisplayName}
+						onChange={(event) =>
+							onToggleLabel(item.id, event.target.checked)
+						}
+					/>
+					<span className="pk-switch-slider" />
+				</label>
+			) : null}
 			<label className="pk-switch">
 				<input
 					type="checkbox"
@@ -119,6 +137,16 @@ export function CardsInfoPanel({ view }: CardsInfoPanelProps) {
 		);
 	};
 
+	const onToggleLabel = (id: string, showLabel: boolean) => {
+		patchCardInfo(
+			cardInfo.map((item) =>
+				item.id === id && item.kind === 'field'
+					? { ...item, showLabel }
+					: item,
+			),
+		);
+	};
+
 	const onDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
 		if (!over || active.id === over.id) {
@@ -155,6 +183,7 @@ export function CardsInfoPanel({ view }: CardsInfoPanelProps) {
 								view={view}
 								item={item}
 								onToggle={onToggle}
+								onToggleLabel={onToggleLabel}
 							/>
 						))}
 					</div>
