@@ -9,6 +9,24 @@ export type FormulaValue =
 
 export const FORMULA_ERR: FormulaValue = { kind: 'err' };
 
+/** Display catalog for the formula editor cheatsheet; names match `evalCall`. */
+export const FORMULA_FUNCTIONS = [
+	{ name: 'MIN', signature: 'MIN(a, b, …)' },
+	{ name: 'MAX', signature: 'MAX(a, b, …)' },
+	{ name: 'IF', signature: 'IF(cond, then, else)' },
+	{ name: 'AND', signature: 'AND(…)' },
+	{ name: 'OR', signature: 'OR(…)' },
+	{ name: 'CONCAT', signature: 'CONCAT(…)' },
+	{ name: 'LEFT', signature: 'LEFT(text, n)' },
+	{ name: 'RIGHT', signature: 'RIGHT(text, n)' },
+	{ name: 'MID', signature: 'MID(text, start, n?)' },
+	{ name: 'LOWER', signature: 'LOWER(text)' },
+	{ name: 'UPPER', signature: 'UPPER(text)' },
+	{ name: 'SEARCH', signature: 'SEARCH(text, needle)' },
+] as const;
+
+export type FormulaFunctionName = (typeof FORMULA_FUNCTIONS)[number]['name'];
+
 const NUMBER_RE = /^-?\d+(\.\d+)?$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;

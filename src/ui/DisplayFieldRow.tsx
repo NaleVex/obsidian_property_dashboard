@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { CardFieldDef, CardFieldType } from '../board/schema';
-import { formulaRefAliases } from '../data/formulaValue';
+import { FORMULA_FUNCTIONS, formulaRefAliases } from '../data/formulaValue';
 import { listVaultProperties } from '../data/vaultProperties';
 import { strings } from '../i18n';
 import { PropertyPicker } from './PropertyPicker';
@@ -31,6 +31,16 @@ function FormulaIcon() {
 	useEffect(() => {
 		if (ref.current) {
 			setIcon(ref.current, 'sigma');
+		}
+	}, []);
+	return <span ref={ref} className="pk-icon" aria-hidden="true" />;
+}
+
+function HelpIcon() {
+	const ref = useRef<HTMLSpanElement>(null);
+	useEffect(() => {
+		if (ref.current) {
+			setIcon(ref.current, 'help-circle');
 		}
 	}, []);
 	return <span ref={ref} className="pk-icon" aria-hidden="true" />;
@@ -188,10 +198,14 @@ function FormulaInput({
 	const wrapRef = useRef<HTMLDivElement>(null);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
+	const helpBtnRef = useRef<HTMLButtonElement>(null);
+	const cheatsheetRef = useRef<HTMLDivElement>(null);
 	const [caret, setCaret] = useState(0);
 	const [dismissedQuery, setDismissedQuery] = useState<string | null>(null);
 	const [activeIndex, setActiveIndex] = useState(0);
 	const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
+	const [helpOpen, setHelpOpen] = useState(false);
+	const [helpStyle, setHelpStyle] = useState<CSSProperties>({});
 	const [portalParent, setPortalParent] = useState<HTMLElement>(
 		() => window.document.body,
 	);
@@ -287,6 +301,41 @@ function FormulaInput({
 		});
 	};
 
+	const updateHelpPosition = () => {
+		const anchor = helpBtnRef.current ?? wrapRef.current;
+		if (!anchor) {
+			return;
+		}
+		const rect = anchor.getBoundingClientRect();
+		const gutter = 8;
+		const maxHeight = Math.min(360, window.innerHeight - gutter * 2);
+		const spaceBelow = window.innerHeight - rect.bottom - gutter;
+		const spaceAbove = rect.top - gutter;
+		const openUp = spaceBelow < 160 && spaceAbove > spaceBelow;
+		const height = Math.min(
+			maxHeight,
+			Math.max(120, openUp ? spaceAbove : spaceBelow),
+		);
+		const width = Math.min(340, Math.max(260, window.innerWidth - gutter * 2));
+		let left = rect.right - width;
+		if (left < gutter) {
+			left = gutter;
+		}
+		if (left + width > window.innerWidth - gutter) {
+			left = Math.max(gutter, window.innerWidth - width - gutter);
+		}
+		setHelpStyle({
+			position: 'fixed',
+			zIndex: 10001,
+			left,
+			width,
+			maxHeight: height,
+			...(openUp
+				? { bottom: window.innerHeight - rect.top + 4, top: 'auto' }
+				: { top: rect.bottom + 4, bottom: 'auto' }),
+		});
+	};
+
 	useLayoutEffect(() => {
 		if (pendingCaret.current === null) {
 			return;
@@ -308,18 +357,69 @@ function FormulaInput({
 		updateMenuPosition();
 	}, [open, suggestions.length]);
 
-	useEffect(() => {
-		if (!open) {
+	useLayoutEffect(() => {
+		if (!helpOpen) {
 			return;
 		}
-		const onReposition = () => updateMenuPosition();
+		setPortalParent(resolvePortalParent(wrapRef.current));
+		updateHelpPosition();
+	}, [helpOpen]);
+
+	useEffect(() => {
+		if (!helpOpen) {
+			return;
+		}
+		const onReposition = () => updateHelpPosition();
 		window.addEventListener('resize', onReposition);
 		window.addEventListener('scroll', onReposition, true);
 		return () => {
 			window.removeEventListener('resize', onReposition);
 			window.removeEventListener('scroll', onReposition, true);
 		};
-	}, [open]);
+	}, [helpOpen]);
+
+	useEffect(() => {
+		if (!helpOpen) {
+			return;
+		}
+		const onPointerDown = (event: PointerEvent) => {
+			const target = event.target;
+			if (!(target instanceof Node)) {
+				return;
+			}
+			if (helpBtnRef.current?.contains(target)) {
+				return;
+			}
+			if (cheatsheetRef.current?.contains(target)) {
+				return;
+			}
+			setHelpOpen(false);
+		};
+		window.addEventListener('pointerdown', onPointerDown, true);
+		return () => {
+			window.removeEventListener('pointerdown', onPointerDown, true);
+		};
+	}, [helpOpen]);
+
+	useEffect(() => {
+		if (!helpOpen) {
+			return;
+		}
+		const onKey = (event: globalThis.KeyboardEvent) => {
+			if (event.key !== 'Escape') {
+				return;
+			}
+			if (open) {
+				return;
+			}
+			event.preventDefault();
+			setHelpOpen(false);
+		};
+		window.addEventListener('keydown', onKey);
+		return () => {
+			window.removeEventListener('keydown', onKey);
+		};
+	}, [helpOpen, open]);
 
 	useEffect(() => {
 		setActiveIndex(0);
@@ -339,33 +439,49 @@ function FormulaInput({
 		onUpdate({ formula: next });
 	};
 
+	const insertFunction = (name: string) => {
+		const el = textareaRef.current;
+		const start = el?.selectionStart ?? caret;
+		const end = el?.selectionEnd ?? start;
+		const snippet = `${name}()`;
+		const next = `${field.formula.slice(0, start)}${snippet}${field.formula.slice(end)}`;
+		pendingCaret.current = start + name.length + 1;
+		onUpdate({ formula: next });
+		el?.focus();
+	};
+
 	const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-		if (!open) {
-			return;
-		}
-		if (event.key === 'ArrowDown') {
-			event.preventDefault();
-			setActiveIndex((index) => (index + 1) % suggestions.length);
-			return;
-		}
-		if (event.key === 'ArrowUp') {
-			event.preventDefault();
-			setActiveIndex(
-				(index) => (index - 1 + suggestions.length) % suggestions.length,
-			);
-			return;
-		}
-		if (event.key === 'Enter' || event.key === 'Tab') {
-			const item = suggestions[activeIndex];
-			if (item) {
+		if (open) {
+			if (event.key === 'ArrowDown') {
 				event.preventDefault();
-				commit(item.insert);
+				setActiveIndex((index) => (index + 1) % suggestions.length);
+				return;
+			}
+			if (event.key === 'ArrowUp') {
+				event.preventDefault();
+				setActiveIndex(
+					(index) => (index - 1 + suggestions.length) % suggestions.length,
+				);
+				return;
+			}
+			if (event.key === 'Enter' || event.key === 'Tab') {
+				const item = suggestions[activeIndex];
+				if (item) {
+					event.preventDefault();
+					commit(item.insert);
+				}
+				return;
+			}
+			if (event.key === 'Escape') {
+				event.preventDefault();
+				setDismissedQuery(brace?.query ?? null);
+				return;
 			}
 			return;
 		}
-		if (event.key === 'Escape') {
+		if (event.key === 'Escape' && helpOpen) {
 			event.preventDefault();
-			setDismissedQuery(brace?.query ?? null);
+			setHelpOpen(false);
 		}
 	};
 
@@ -406,6 +522,49 @@ function FormulaInput({
 			)
 		: null;
 
+	const cheatsheet = helpOpen
+		? createPortal(
+				<div
+					ref={cheatsheetRef}
+					className="pk-property-picker-dropdown pk-formula-cheatsheet"
+					role="dialog"
+					aria-label={strings.displayField.formulaHelp}
+					style={helpStyle}
+				>
+					<div className="pk-formula-cheatsheet-body">
+						<div className="pk-formula-cheatsheet-heading">
+							{strings.displayField.formulaHelpFunctions}
+						</div>
+						{FORMULA_FUNCTIONS.map((fn) => (
+							<button
+								key={fn.name}
+								type="button"
+								className="pk-formula-cheatsheet-item"
+								onMouseDown={(event) => event.preventDefault()}
+								onClick={() => insertFunction(fn.name)}
+							>
+								<span className="pk-formula-cheatsheet-sig">
+									{fn.signature}
+								</span>
+								<span className="pk-formula-cheatsheet-desc">
+									{strings.displayField.formulaFns[fn.name]}
+								</span>
+							</button>
+						))}
+						<div className="pk-formula-cheatsheet-heading">
+							{strings.displayField.formulaHelpSyntax}
+						</div>
+						<ul className="pk-formula-cheatsheet-syntax">
+							{strings.displayField.formulaHelpSyntaxItems.map((line) => (
+								<li key={line}>{line}</li>
+							))}
+						</ul>
+					</div>
+				</div>,
+				portalParent,
+			)
+		: null;
+
 	return (
 		<div ref={wrapRef} className="pk-formula-editor">
 			<textarea
@@ -428,7 +587,23 @@ function FormulaInput({
 				onSelect={syncCaret}
 				onKeyDown={onKeyDown}
 			/>
+			<button
+				ref={helpBtnRef}
+				type="button"
+				className={
+					helpOpen
+						? 'pk-icon-button pk-icon-button-active pk-formula-help'
+						: 'pk-icon-button pk-formula-help'
+				}
+				aria-expanded={helpOpen}
+				aria-label={strings.displayField.formulaHelp}
+				title={strings.displayField.formulaHelp}
+				onClick={() => setHelpOpen((value) => !value)}
+			>
+				<HelpIcon />
+			</button>
 			{dropdown}
+			{cheatsheet}
 		</div>
 	);
 }
