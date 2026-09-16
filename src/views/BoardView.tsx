@@ -5,6 +5,7 @@ import {
 	BoardDocument,
 	DEFAULT_TRIGGER_PROPERTY,
 	DEFAULT_VALUES,
+	isCardsView,
 	isTableView,
 	parseBoardDocument,
 	serializeBoardDocument,
@@ -99,14 +100,14 @@ export class BoardView extends TextFileView {
 			this.document.views.find((view) => view.id === this.document.activeViewId) ??
 			this.document.views[0];
 
-		if (activeView && isTableView(activeView)) {
+		if (activeView && (isTableView(activeView) || isCardsView(activeView))) {
 			this.noteIndex.configure(
 				{
 					indexMode: 'table',
 					limitTo: this.document.settings.limitTo,
 				},
 				boardPath,
-				activeView.values,
+				isTableView(activeView) ? activeView.values : activeView.cardFields,
 			);
 			return;
 		}

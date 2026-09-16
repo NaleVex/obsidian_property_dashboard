@@ -1,9 +1,19 @@
 import { App, Modal } from 'obsidian';
 import { Root, createRoot } from 'react-dom/client';
 import { StrictMode, useState } from 'react';
-import { BoardDocument, BoardViewConfig, isKanbanView, isTableView, KanbanViewConfig, TableViewConfig } from '../board/schema';
+import {
+	BoardDocument,
+	BoardViewConfig,
+	CardsViewConfig,
+	isCardsView,
+	isKanbanView,
+	isTableView,
+	KanbanViewConfig,
+	TableViewConfig,
+} from '../board/schema';
 import { format, strings } from '../i18n';
 import { CardFieldsEditor } from './CardFieldsEditor';
+import { CardsLayoutSettings } from './CardsLayoutSettings';
 import { TableValuesEditor } from './TableValuesEditor';
 import { ViewColumnSettings } from './ViewColumnSettings';
 
@@ -53,6 +63,14 @@ function ViewSettingsForm({
 		);
 	};
 
+	const onUpdateCardsView = (
+		updater: (current: CardsViewConfig) => CardsViewConfig,
+	) => {
+		onUpdateView((current) =>
+			current.type === 'cards' ? updater(current) : current,
+		);
+	};
+
 	return (
 		<div className="pk-settings pk-settings-modal">
 			{isKanbanView(view) ? (
@@ -74,6 +92,19 @@ function ViewSettingsForm({
 					view={view}
 					onUpdateView={onUpdateTableView}
 				/>
+			) : isCardsView(view) ? (
+				<>
+					<CardsLayoutSettings
+						app={host.app}
+						view={view}
+						onUpdateView={onUpdateCardsView}
+					/>
+					<CardFieldsEditor
+						app={host.app}
+						view={view}
+						onUpdateView={onUpdateCardsView}
+					/>
+				</>
 			) : null}
 		</div>
 	);

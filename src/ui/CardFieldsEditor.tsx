@@ -1,20 +1,24 @@
 import { App } from 'obsidian';
 import {
+	CardDisplayView,
 	CardFieldDef,
-	KanbanViewConfig,
 	addCardFieldToView,
 	removeCardFieldFromView,
 } from '../board/schema';
 import { strings } from '../i18n';
 import { DisplayFieldRow } from './DisplayFieldRow';
 
-interface CardFieldsEditorProps {
+interface CardFieldsEditorProps<T extends CardDisplayView> {
 	app: App;
-	view: KanbanViewConfig;
-	onUpdateView: (updater: (current: KanbanViewConfig) => KanbanViewConfig) => void;
+	view: T;
+	onUpdateView: (updater: (current: T) => T) => void;
 }
 
-export function CardFieldsEditor({ app, view, onUpdateView }: CardFieldsEditorProps) {
+export function CardFieldsEditor<T extends CardDisplayView>({
+	app,
+	view,
+	onUpdateView,
+}: CardFieldsEditorProps<T>) {
 	const updateField = (fieldId: string, patch: Partial<CardFieldDef>) => {
 		onUpdateView((current) => ({
 			...current,

@@ -14,13 +14,11 @@ Each board is a `.board` file in your vault. Pick a trigger property (for exampl
 
 - **Boards as vault files** — Settings and views live in a `.board` file next to your notes, not buried in plugin settings
 - **Properties as the source of truth** — Columns come from a frontmatter key; empty or unknown values land in an **Unknown** column
-- **Kanban and table on one board** — Multiple named views share the same scope and trigger property
-- **Rich card and column fields** — Show properties, file metadata, or slices of the note body (paragraph fields)
+- **Kanban, table, and cards on one board** — Multiple named views share the same scope; Cards is a gallery grid with optional cover images
+- **Rich card and column fields** — Show properties, file metadata, formulas, or slices of the note body (paragraph fields)
 
 ## Roadmap
 
-- Card view
-- Formula fields
 - More language translations
 
 Suggestions and issues are welcome.
@@ -55,7 +53,7 @@ status: in-progress
 ---
 ```
 
-5. Add more Kanban or Table views with the **+** tab control if needed.
+5. Add more Kanban, Table, or Cards views with the **+** tab control if needed.
 
 Notes without the trigger property are excluded. Notes with the property but an empty or unrecognized value appear in the **Unknown** column.
 

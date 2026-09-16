@@ -3,14 +3,17 @@ import { useEffect, useRef, type MouseEvent } from 'react';
 import {
 	BoardViewConfig,
 	cloneView,
+	createDefaultCardsView,
 	createDefaultKanbanView,
 	createDefaultTableView,
+	isCardsView,
 	isKanbanView,
 	isTableView,
 } from '../board/schema';
 import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
 import { BoardSettingsModal } from './BoardSettingsModal';
+import { CardsView } from './CardsView';
 import { KanbanView } from './KanbanView';
 import { QuickSearchProvider } from './QuickSearchContext';
 import { TableView } from './TableView';
@@ -55,22 +58,25 @@ export function BoardShell() {
 		}));
 	};
 
-	const addView = (type: 'kanban' | 'table') => {
+	const addView = (type: 'kanban' | 'table' | 'cards') => {
+		const defaults =
+			type === 'kanban'
+				? { name: 'Kanban', create: createDefaultKanbanView }
+				: type === 'table'
+					? { name: 'Table', create: createDefaultTableView }
+					: { name: 'Cards', create: createDefaultCardsView };
 		void promptForText(app, {
 			title: strings.board.newView,
 			label: strings.board.viewName,
-			defaultValue: type === 'kanban' ? 'Kanban' : 'Table',
-			placeholder: type === 'kanban' ? 'Kanban' : 'Table',
+			defaultValue: defaults.name,
+			placeholder: defaults.name,
 			submitLabel: strings.common.create,
 		}).then((name) => {
 			if (name === null) {
 				return;
 			}
-			const trimmed = name.trim() || (type === 'kanban' ? 'Kanban' : 'Table');
-			const view =
-				type === 'kanban'
-					? createDefaultKanbanView(trimmed)
-					: createDefaultTableView(trimmed);
+			const trimmed = name.trim() || defaults.name;
+			const view = defaults.create(trimmed);
 			updateDocument((doc) => ({
 				...doc,
 				views: [...doc.views, view],
@@ -90,6 +96,11 @@ export function BoardShell() {
 		menu.addItem((item) => {
 			item.setTitle(strings.board.table).setIcon('table').onClick(() => {
 				addView('table');
+			});
+		});
+		menu.addItem((item) => {
+			item.setTitle(strings.board.cards).setIcon('layout-grid').onClick(() => {
+				addView('cards');
 			});
 		});
 		menu.showAtMouseEvent(event.nativeEvent);
@@ -220,6 +231,8 @@ export function BoardShell() {
 					<KanbanView view={activeView} />
 				) : activeView && isTableView(activeView) ? (
 					<TableView view={activeView} />
+				) : activeView && isCardsView(activeView) ? (
+					<CardsView view={activeView} />
 				) : (
 					<div className="pk-board-empty">{strings.board.noViews}</div>
 				)}

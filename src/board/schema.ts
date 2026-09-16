@@ -28,7 +28,9 @@ export type LimitTo =
 	| { mode: 'siblings' }
 	| { mode: 'folder'; path: string };
 
-export type BoardViewType = 'kanban' | 'table';
+export type BoardViewType = 'kanban' | 'table' | 'cards';
+export type CardCoverMode = 'none' | 'property' | 'firstEmbed';
+export type CardSize = 's' | 'm' | 'l';
 export type CardFieldType =
 	| 'property'
 	| 'paragraph'
@@ -161,7 +163,28 @@ export interface TableViewConfig {
 	cardColors: CardColorRule[];
 }
 
-export type BoardViewConfig = KanbanViewConfig | TableViewConfig;
+export interface CardCoverConfig {
+	mode: CardCoverMode;
+	property: string;
+}
+
+export interface CardsViewConfig {
+	id: string;
+	type: 'cards';
+	name: string;
+	cardFields: CardFieldDef[];
+	cardInfo: CardInfoItem[];
+	filters: FilterRule[];
+	sorts: SortRule[];
+	cardColors: CardColorRule[];
+	cover: CardCoverConfig;
+	cardSize: CardSize;
+}
+
+export type BoardViewConfig = KanbanViewConfig | TableViewConfig | CardsViewConfig;
+
+/** Views that use cardFields + cardInfo for display. */
+export type CardDisplayView = KanbanViewConfig | CardsViewConfig;
 
 export function isKanbanView(view: BoardViewConfig): view is KanbanViewConfig {
 	return view.type === 'kanban';
@@ -169,6 +192,16 @@ export function isKanbanView(view: BoardViewConfig): view is KanbanViewConfig {
 
 export function isTableView(view: BoardViewConfig): view is TableViewConfig {
 	return view.type === 'table';
+}
+
+export function isCardsView(view: BoardViewConfig): view is CardsViewConfig {
+	return view.type === 'cards';
+}
+
+export function isCardDisplayView(
+	view: BoardViewConfig,
+): view is CardDisplayView {
+	return view.type === 'kanban' || view.type === 'cards';
 }
 
 export interface BoardSettings {
@@ -277,6 +310,25 @@ export function createDefaultTableView(name = 'Table'): TableViewConfig {
 		filters: [],
 		sorts: [],
 		cardColors: [],
+	};
+}
+
+export function createDefaultCardCover(): CardCoverConfig {
+	return { mode: 'none', property: '' };
+}
+
+export function createDefaultCardsView(name = 'Cards'): CardsViewConfig {
+	return {
+		id: createId(),
+		type: 'cards',
+		name,
+		cardFields: [],
+		cardInfo: createDefaultCardInfo(),
+		filters: [],
+		sorts: [],
+		cardColors: [],
+		cover: createDefaultCardCover(),
+		cardSize: 'm',
 	};
 }
 
@@ -474,7 +526,7 @@ function selectableViewFields(
 export function getViewPropertyFields(
 	view: BoardViewConfig,
 ): Array<{ property: string; label: string; kind: 'property' | 'formula' }> {
-	if (isKanbanView(view)) {
+	if (isCardDisplayView(view)) {
 		return selectableViewFields(view.cardFields);
 	}
 	return selectableViewFields(view.values);
@@ -567,7 +619,7 @@ export function removeTableValueFromView(
 	};
 }
 
-export function addCardFieldToView(view: KanbanViewConfig): KanbanViewConfig {
+export function addCardFieldToView<T extends CardDisplayView>(view: T): T {
 	const field = createCardFieldDef();
 	const cardFields = [...view.cardFields, field];
 	const cardInfo = [
@@ -587,10 +639,10 @@ export function addCardFieldToView(view: KanbanViewConfig): KanbanViewConfig {
 	};
 }
 
-export function removeCardFieldFromView(
-	view: KanbanViewConfig,
+export function removeCardFieldFromView<T extends CardDisplayView>(
+	view: T,
 	fieldId: string,
-): KanbanViewConfig {
+): T {
 	const cardFields = view.cardFields.filter((field) => field.id !== fieldId);
 	const cardInfo = view.cardInfo.filter(
 		(item) => !(item.kind === 'field' && item.fieldId === fieldId),
@@ -1006,6 +1058,48 @@ function parseTableView(item: Record<string, unknown>): TableViewConfig | null {
 	};
 }
 
+function parseCardCover(raw: unknown): CardCoverConfig {
+	const defaults = createDefaultCardCover();
+	if (!isRecord(raw)) {
+		return defaults;
+	}
+	const mode =
+		raw.mode === 'none' || raw.mode === 'property' || raw.mode === 'firstEmbed'
+			? raw.mode
+			: defaults.mode;
+	const property =
+		typeof raw.property === 'string' ? raw.property.trim() : defaults.property;
+	return { mode, property };
+}
+
+function parseCardSize(raw: unknown): CardSize {
+	if (raw === 's' || raw === 'm' || raw === 'l') {
+		return raw;
+	}
+	return 'm';
+}
+
+function parseCardsView(item: Record<string, unknown>): CardsViewConfig | null {
+	if (typeof item.id !== 'string' || typeof item.name !== 'string') {
+		return null;
+	}
+
+	const cardFields = parseCardFields(item.cardFields);
+
+	return {
+		id: item.id,
+		type: 'cards',
+		name: item.name.trim() || 'Cards',
+		cardFields,
+		cardInfo: parseCardInfo(item.cardInfo, cardFields),
+		filters: parseFilters(item.filters),
+		sorts: parseSorts(item.sorts),
+		cardColors: parseCardColors(item.cardColors),
+		cover: parseCardCover(item.cover),
+		cardSize: parseCardSize(item.cardSize),
+	};
+}
+
 function parseViews(
 	raw: unknown,
 	legacy: LegacyBoardSettings,
@@ -1028,6 +1122,13 @@ function parseViews(
 		}
 		if (item.type === 'table') {
 			const view = parseTableView(item);
+			if (view) {
+				views.push(view);
+			}
+			continue;
+		}
+		if (item.type === 'cards') {
+			const view = parseCardsView(item);
 			if (view) {
 				views.push(view);
 			}

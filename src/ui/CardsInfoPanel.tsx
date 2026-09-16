@@ -16,16 +16,17 @@ import { CSS } from '@dnd-kit/utilities';
 import { setIcon } from 'obsidian';
 import { useEffect, useRef } from 'react';
 import {
-	KanbanViewConfig,
+	CardDisplayView,
 	CARD_INFO_NAME_ID,
 	CardInfoItem,
+	isCardDisplayView,
 	normalizeCardInfo,
 } from '../board/schema';
 import { strings } from '../i18n';
 import { useBoardApp } from './BoardAppContext';
 
 interface CardsInfoPanelProps {
-	view: KanbanViewConfig;
+	view: CardDisplayView;
 }
 
 function GripIcon() {
@@ -38,7 +39,7 @@ function GripIcon() {
 	return <span ref={ref} className="pk-icon" aria-hidden="true" />;
 }
 
-function itemLabel(view: KanbanViewConfig, item: CardInfoItem): string {
+function itemLabel(view: CardDisplayView, item: CardInfoItem): string {
 	if (item.kind === 'name') {
 		return strings.common.name;
 	}
@@ -55,7 +56,7 @@ function SortableInfoRow({
 	onToggle,
 	onToggleLabel,
 }: {
-	view: KanbanViewConfig;
+	view: CardDisplayView;
 	item: CardInfoItem;
 	onToggle: (id: string, enabled: boolean) => void;
 	onToggleLabel?: (id: string, showLabel: boolean) => void;
@@ -121,7 +122,7 @@ export function CardsInfoPanel({ view }: CardsInfoPanelProps) {
 		updateDocument((doc) => ({
 			...doc,
 			views: doc.views.map((item) =>
-				item.id === view.id && item.type === 'kanban'
+				item.id === view.id && isCardDisplayView(item)
 					? {
 							...item,
 							cardInfo: normalizeCardInfo(next, item.cardFields),

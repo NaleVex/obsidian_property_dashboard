@@ -1,8 +1,9 @@
 import { useDraggable } from '@dnd-kit/core';
 import type { CSSProperties } from 'react';
 import {
-	KanbanViewConfig,
+	CardDisplayView,
 	CardFieldDef,
+	KanbanViewConfig,
 	normalizeCardInfo,
 } from '../board/schema';
 import {
@@ -78,7 +79,7 @@ function renderFieldLine(
 
 export function buildCardLines(
 	card: BoardCardType,
-	view: KanbanViewConfig,
+	view: CardDisplayView,
 ): Array<{ key: string; text: string; isTitle?: boolean }> {
 	const cardInfo = normalizeCardInfo(view.cardInfo, view.cardFields);
 	const lines: Array<{ key: string; text: string; isTitle?: boolean }> = [];
@@ -114,7 +115,7 @@ export function CardBody({
 	onOpen,
 }: {
 	card: BoardCardType;
-	view: KanbanViewConfig;
+	view: CardDisplayView;
 	onOpen?: () => void;
 }) {
 	const lines = buildCardLines(card, view);
