@@ -10,6 +10,8 @@ Each board is a `.board` file in your vault. Pick a trigger property (for exampl
 
 ![Table view with filters, sort, and colors](docs/table.png)
 
+![Cards gallery with cover images](docs/cards.png)
+
 ## Features
 
 - **Boards as vault files** — Settings and views live in a `.board` file next to your notes, not buried in plugin settings
