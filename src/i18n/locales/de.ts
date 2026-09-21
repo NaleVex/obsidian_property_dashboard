@@ -155,6 +155,12 @@ export const STRINGS_DE: Strings = {
 		coverFirstEmbed: 'Erste Bildeinbettung',
 		coverPropertyName: 'Titelbild-Eigenschaft',
 		coverPropertyPlaceholder: 'cover',
+		coverDisplay: 'Bildanzeige',
+		coverDisplayFit: 'Ganzes Bild einpassen',
+		coverDisplayUniform: 'Einheitliche Größe (zuschneiden)',
+		coverHeightRatio: 'Höhenverhältnis',
+		coverHeightRatioHint:
+			'Titelbildhöhe als Bruchteil der Kartenbreite (z. B. 0,8).',
 		cardSize: 'Kartengröße',
 		sizeS: 'Klein',
 		sizeM: 'Mittel',

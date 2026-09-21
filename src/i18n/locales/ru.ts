@@ -155,6 +155,12 @@ export const STRINGS_RU: Strings = {
 		coverFirstEmbed: 'Первое встроенное изображение',
 		coverPropertyName: 'Свойство обложки',
 		coverPropertyPlaceholder: 'cover',
+		coverDisplay: 'Отображение изображения',
+		coverDisplayFit: 'Вписать целиком',
+		coverDisplayUniform: 'Единый размер (обрезка)',
+		coverHeightRatio: 'Отношение высоты',
+		coverHeightRatioHint:
+			'Высота обложки как доля ширины карточки (например, 0.8).',
 		cardSize: 'Размер карточки',
 		sizeS: 'Маленький',
 		sizeM: 'Средний',

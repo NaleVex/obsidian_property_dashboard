@@ -30,6 +30,7 @@ export type LimitTo =
 
 export type BoardViewType = 'kanban' | 'table' | 'cards';
 export type CardCoverMode = 'none' | 'property' | 'firstEmbed';
+export type CardCoverDisplay = 'fit' | 'uniform';
 export type CardSize = 's' | 'm' | 'l';
 export type CardFieldType =
 	| 'property'
@@ -166,6 +167,9 @@ export interface TableViewConfig {
 export interface CardCoverConfig {
 	mode: CardCoverMode;
 	property: string;
+	display: CardCoverDisplay;
+	/** Height as a fraction of card width; used when display is uniform. */
+	heightRatio: number;
 }
 
 export interface CardsViewConfig {
@@ -313,8 +317,27 @@ export function createDefaultTableView(name = 'Table'): TableViewConfig {
 	};
 }
 
+export const DEFAULT_COVER_HEIGHT_RATIO = 0.625;
+export const MIN_COVER_HEIGHT_RATIO = 0.25;
+export const MAX_COVER_HEIGHT_RATIO = 2;
+
 export function createDefaultCardCover(): CardCoverConfig {
-	return { mode: 'none', property: '' };
+	return {
+		mode: 'none',
+		property: '',
+		display: 'uniform',
+		heightRatio: DEFAULT_COVER_HEIGHT_RATIO,
+	};
+}
+
+export function clampCoverHeightRatio(value: number): number {
+	if (!Number.isFinite(value)) {
+		return DEFAULT_COVER_HEIGHT_RATIO;
+	}
+	return Math.min(
+		MAX_COVER_HEIGHT_RATIO,
+		Math.max(MIN_COVER_HEIGHT_RATIO, value),
+	);
 }
 
 export function createDefaultCardsView(name = 'Cards'): CardsViewConfig {
@@ -1069,7 +1092,15 @@ function parseCardCover(raw: unknown): CardCoverConfig {
 			: defaults.mode;
 	const property =
 		typeof raw.property === 'string' ? raw.property.trim() : defaults.property;
-	return { mode, property };
+	const display =
+		raw.display === 'fit' || raw.display === 'uniform'
+			? raw.display
+			: defaults.display;
+	const heightRatio =
+		typeof raw.heightRatio === 'number'
+			? clampCoverHeightRatio(raw.heightRatio)
+			: defaults.heightRatio;
+	return { mode, property, display, heightRatio };
 }
 
 function parseCardSize(raw: unknown): CardSize {

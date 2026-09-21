@@ -1,8 +1,12 @@
 import { App } from 'obsidian';
 import {
+	CardCoverDisplay,
 	CardCoverMode,
 	CardSize,
 	CardsViewConfig,
+	MAX_COVER_HEIGHT_RATIO,
+	MIN_COVER_HEIGHT_RATIO,
+	clampCoverHeightRatio,
 } from '../board/schema';
 import { strings } from '../i18n';
 import { PropertyPicker } from './PropertyPicker';
@@ -18,6 +22,8 @@ export function CardsLayoutSettings({
 	view,
 	onUpdateView,
 }: CardsLayoutSettingsProps) {
+	const coverEnabled = view.cover.mode !== 'none';
+
 	return (
 		<div className="pk-panel pk-panel-flat">
 			<div className="pk-panel-header">
@@ -65,6 +71,65 @@ export function CardsLayoutSettings({
 						}}
 					/>
 				</label>
+			) : null}
+
+			{coverEnabled ? (
+				<>
+					<label className="pk-field">
+						<span className="pk-field-label">
+							{strings.cardsLayout.coverDisplay}
+						</span>
+						<select
+							className="pk-input"
+							value={view.cover.display}
+							aria-label={strings.cardsLayout.coverDisplay}
+							onChange={(event) => {
+								const display = event.target.value as CardCoverDisplay;
+								onUpdateView((current) => ({
+									...current,
+									cover: { ...current.cover, display },
+								}));
+							}}
+						>
+							<option value="fit">{strings.cardsLayout.coverDisplayFit}</option>
+							<option value="uniform">
+								{strings.cardsLayout.coverDisplayUniform}
+							</option>
+						</select>
+					</label>
+
+					{view.cover.display === 'uniform' ? (
+						<label className="pk-field">
+							<span className="pk-field-label">
+								{strings.cardsLayout.coverHeightRatio}
+							</span>
+							<input
+								className="pk-input"
+								type="number"
+								min={MIN_COVER_HEIGHT_RATIO}
+								max={MAX_COVER_HEIGHT_RATIO}
+								step={0.05}
+								value={view.cover.heightRatio}
+								aria-label={strings.cardsLayout.coverHeightRatio}
+								title={strings.cardsLayout.coverHeightRatioHint}
+								onChange={(event) => {
+									const parsed = Number(event.target.value);
+									if (!Number.isFinite(parsed)) {
+										return;
+									}
+									const heightRatio = clampCoverHeightRatio(parsed);
+									onUpdateView((current) => ({
+										...current,
+										cover: { ...current.cover, heightRatio },
+									}));
+								}}
+							/>
+							<span className="pk-field-hint">
+								{strings.cardsLayout.coverHeightRatioHint}
+							</span>
+						</label>
+					) : null}
+				</>
 			) : null}
 
 			<label className="pk-field">

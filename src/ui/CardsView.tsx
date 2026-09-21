@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { setIcon } from 'obsidian';
 import { CardsViewConfig } from '../board/schema';
 import { resolveCoverImage } from '../data/coverImage';
@@ -67,7 +67,21 @@ function GalleryCard({
 			}}
 		>
 			{coverUrl ? (
-				<div className="pk-gallery-cover" aria-hidden="true">
+				<div
+					className={`pk-gallery-cover ${
+						view.cover.display === 'fit'
+							? 'pk-gallery-cover-fit'
+							: 'pk-gallery-cover-uniform'
+					}`}
+					style={
+						view.cover.display === 'uniform'
+							? ({
+									['--pk-cover-ratio']: String(view.cover.heightRatio),
+								} as CSSProperties)
+							: undefined
+					}
+					aria-hidden="true"
+				>
 					<img src={coverUrl} alt="" className="pk-gallery-cover-img" />
 				</div>
 			) : null}

@@ -1037,6 +1037,11 @@
 	color: var(--text-muted);
 }
 
+.pk-field-hint {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
 .pk-input {
 	width: 100%;
 	padding: 6px 8px;
@@ -1183,17 +1188,32 @@
 	border: none;
 	border-radius: 0;
 	background: var(--background-secondary);
-	aspect-ratio: 16 / 10;
 	overflow: hidden;
 	flex-shrink: 0;
 	pointer-events: none;
 }
 
-.pk-gallery-cover-img {
+.pk-gallery-cover-uniform {
+	aspect-ratio: 1 / var(--pk-cover-ratio, 0.625);
+}
+
+.pk-gallery-cover-fit .pk-gallery-cover-img {
+	display: block;
+	width: 100%;
+	height: auto;
+	object-fit: unset;
+}
+
+.pk-gallery-cover-uniform .pk-gallery-cover-img {
 	display: block;
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
+}
+
+.pk-gallery-cover-img {
+	display: block;
+	width: 100%;
 }
 
 .pk-gallery-card .pk-card-open {
