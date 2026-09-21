@@ -39,6 +39,16 @@ function GripIcon() {
 	return <span ref={ref} className="pk-icon" aria-hidden="true" />;
 }
 
+function ActionIcon({ name }: { name: string }) {
+	const ref = useRef<HTMLSpanElement>(null);
+	useEffect(() => {
+		if (ref.current) {
+			setIcon(ref.current, name);
+		}
+	}, [name]);
+	return <span ref={ref} className="pk-icon" aria-hidden="true" />;
+}
+
 function itemLabel(view: CardDisplayView, item: CardInfoItem): string {
 	if (item.kind === 'name') {
 		return strings.common.name;
@@ -84,27 +94,37 @@ function SortableInfoRow({
 			<span className="pk-cards-info-label">{itemLabel(view, item)}</span>
 			{item.kind === 'field' && onToggleLabel ? (
 				<label
-					className="pk-switch"
+					className="pk-switch-with-icon"
 					title={strings.cardsInfo.showDisplayName}
 				>
-					<input
-						type="checkbox"
-						checked={item.showLabel}
-						aria-label={strings.cardsInfo.showDisplayName}
-						onChange={(event) =>
-							onToggleLabel(item.id, event.target.checked)
-						}
-					/>
-					<span className="pk-switch-slider" />
+					<ActionIcon name="tag" />
+					<span className="pk-switch">
+						<input
+							type="checkbox"
+							checked={item.showLabel}
+							aria-label={strings.cardsInfo.showDisplayName}
+							onChange={(event) =>
+								onToggleLabel(item.id, event.target.checked)
+							}
+						/>
+						<span className="pk-switch-slider" />
+					</span>
 				</label>
 			) : null}
-			<label className="pk-switch">
-				<input
-					type="checkbox"
-					checked={item.enabled}
-					onChange={(event) => onToggle(item.id, event.target.checked)}
-				/>
-				<span className="pk-switch-slider" />
+			<label
+				className="pk-switch-with-icon"
+				title={strings.cardsInfo.showOnCard}
+			>
+				<ActionIcon name="eye" />
+				<span className="pk-switch">
+					<input
+						type="checkbox"
+						checked={item.enabled}
+						aria-label={strings.cardsInfo.showOnCard}
+						onChange={(event) => onToggle(item.id, event.target.checked)}
+					/>
+					<span className="pk-switch-slider" />
+				</span>
 			</label>
 		</div>
 	);

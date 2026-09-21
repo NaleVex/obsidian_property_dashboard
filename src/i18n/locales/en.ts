@@ -221,6 +221,7 @@ export const STRINGS_EN = {
 		title: 'Cards info',
 		hint: 'Choose which fields appear on cards and in what order.',
 		showDisplayName: 'Display name',
+		showOnCard: 'Show on card',
 	},
 	tableColumns: {
 		title: 'Columns',

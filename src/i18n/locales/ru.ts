@@ -224,6 +224,7 @@ export const STRINGS_RU: Strings = {
 		title: 'Поля карточек',
 		hint: 'Выберите, какие поля показывать на карточках и в каком порядке.',
 		showDisplayName: 'Отображаемое имя',
+		showOnCard: 'Показывать на карточке',
 	},
 	tableColumns: {
 		title: 'Столбцы',

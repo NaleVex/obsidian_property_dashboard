@@ -224,6 +224,7 @@ export const STRINGS_DE: Strings = {
 		title: 'Karteninfo',
 		hint: 'Wähle, welche Felder auf Karten erscheinen und in welcher Reihenfolge.',
 		showDisplayName: 'Anzeigename',
+		showOnCard: 'Auf Karte anzeigen',
 	},
 	tableColumns: {
 		title: 'Spalten',

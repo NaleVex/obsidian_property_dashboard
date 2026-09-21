@@ -405,7 +405,7 @@ function FormulaInput({
 		if (!helpOpen) {
 			return;
 		}
-		const onKey = (event: globalThis.KeyboardEvent) => {
+		const onKey = (event: WindowEventMap['keydown']) => {
 			if (event.key !== 'Escape') {
 				return;
 			}

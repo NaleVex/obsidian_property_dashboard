@@ -525,6 +525,15 @@
 	cursor: grabbing;
 }
 
+.pk-switch-with-icon {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
 .pk-switch {
 	position: relative;
 	display: inline-flex;
