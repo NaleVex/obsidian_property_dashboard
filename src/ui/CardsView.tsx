@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { setIcon } from 'obsidian';
 import { CardsViewConfig } from '../board/schema';
 import { resolveCoverImage } from '../data/coverImage';
@@ -26,6 +26,60 @@ import { ViewSettingsModal } from './ViewSettingsModal';
 import { useNoteIndex } from './hooks/useNoteIndex';
 
 type CardsPanel = 'cardsInfo' | 'filter' | 'sort' | 'cardColors';
+
+const MASONRY_ROW_PX = 8;
+const MASONRY_GAP_PX = 12;
+
+function masonrySpanForHeight(height: number): number {
+	return Math.max(
+		1,
+		Math.ceil((height + MASONRY_GAP_PX) / (MASONRY_ROW_PX + MASONRY_GAP_PX)),
+	);
+}
+
+function applyMasonrySpans(grid: HTMLElement) {
+	const cards = grid.querySelectorAll<HTMLElement>('.pk-gallery-card');
+	for (const card of Array.from(cards)) {
+		card.style.gridRowEnd = 'auto';
+		const height = card.getBoundingClientRect().height;
+		card.style.gridRowEnd = `span ${masonrySpanForHeight(height)}`;
+	}
+}
+
+function useMasonryGrid(
+	gridRef: RefObject<HTMLDivElement | null>,
+	layoutKey: string,
+) {
+	useEffect(() => {
+		const grid = gridRef.current;
+		if (!grid) {
+			return;
+		}
+
+		let frame = 0;
+		const schedule = () => {
+			cancelAnimationFrame(frame);
+			frame = requestAnimationFrame(() => {
+				applyMasonrySpans(grid);
+			});
+		};
+
+		schedule();
+
+		const observer = new ResizeObserver(schedule);
+		observer.observe(grid);
+		for (const card of Array.from(
+			grid.querySelectorAll<HTMLElement>('.pk-gallery-card'),
+		)) {
+			observer.observe(card);
+		}
+
+		return () => {
+			cancelAnimationFrame(frame);
+			observer.disconnect();
+		};
+	}, [gridRef, layoutKey]);
+}
 
 function ToolbarIcon({ name }: { name: string }) {
 	const ref = useRef<HTMLSpanElement>(null);
@@ -146,6 +200,16 @@ export function CardsView({ view }: CardsViewProps) {
 	const hasActiveCardColors = view.cardColors.some((rule) => rule.enabled);
 	const hasQuickSearch = quickSearch.trim().length > 0;
 
+	const gridRef = useRef<HTMLDivElement>(null);
+	const masonryKey = [
+		view.cardSize,
+		view.cover.mode,
+		view.cover.display,
+		view.cover.heightRatio,
+		displayCards.map((card) => card.id).join(','),
+	].join('|');
+	useMasonryGrid(gridRef, masonryKey);
+
 	return (
 		<div className="pk-cards-view">
 			<div className="pk-cards-toolbar">
@@ -244,6 +308,7 @@ export function CardsView({ view }: CardsViewProps) {
 				<div className="pk-board-empty">{strings.cards.noCardsMatchFilters}</div>
 			) : (
 				<div
+					ref={gridRef}
 					className={`pk-cards-grid pk-cards-size-${view.cardSize}`}
 				>
 					{displayCards.map((card) => (

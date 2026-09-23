@@ -1154,23 +1154,28 @@
 }
 
 .pk-cards-grid {
-	column-gap: 12px;
+	display: grid;
+	gap: 12px;
 	padding: 4px 2px 12px;
 	overflow: auto;
 	flex: 1;
 	min-height: 0;
+	align-content: start;
+	align-items: stretch;
+	/* Small row unit; JS sets each card's grid-row span for masonry packing. */
+	grid-auto-rows: 8px;
 }
 
 .pk-cards-size-s {
-	column-width: 140px;
+	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
 }
 
 .pk-cards-size-m {
-	column-width: 200px;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
 .pk-cards-size-l {
-	column-width: 280px;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
 .pk-gallery-card {
@@ -1179,10 +1184,8 @@
 	flex-direction: column;
 	overflow: hidden;
 	height: auto;
-	min-height: min-content;
+	min-height: 0;
 	width: 100%;
-	margin-bottom: 12px;
-	break-inside: avoid;
 }
 
 .pk-gallery-card:active {
